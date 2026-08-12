@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\ApiToken;
 use App\Models\Category;
 use App\Models\InventoryItem;
+use App\Models\Notification;
 use App\Models\Organization;
 use App\Models\Permission;
 use App\Models\PurchaseOrder;
@@ -19,7 +21,6 @@ use App\Models\WorkflowState;
 use App\Models\WorkflowTransition;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -90,55 +91,74 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Apex Custom Tenant Roles
-        $managerRole = Role::firstOrCreate(
-            ['organization_id' => $apexOrg->id, 'slug' => 'inventory-manager'],
-            ['name' => 'Inventory Manager', 'description' => 'Oversees inventory stock and approves purchase orders', 'is_system' => false]
+        // 4. Seed PDF Flowchart Specific Roles for Apex Logistics
+        $roleClerk = Role::firstOrCreate(
+            ['organization_id' => $apexOrg->id, 'slug' => 'subject-clerk'],
+            ['name' => 'Subject Clerk', 'description' => 'Enters items lot to system & creates stock request', 'is_system' => false]
         );
-        $managerRole->permissions()->sync(array_column($permModels, 'id'));
+        $roleClerk->permissions()->sync([$permModels['items.view']->id, $permModels['stock.create']->id]);
 
-        $inspectorRole = Role::firstOrCreate(
-            ['organization_id' => $apexOrg->id, 'slug' => 'quality-inspector'],
-            ['name' => 'Quality Inspector', 'description' => 'Executes quality control inspection on incoming stock movements', 'is_system' => false]
+        $roleOC = Role::firstOrCreate(
+            ['organization_id' => $apexOrg->id, 'slug' => 'oc'],
+            ['name' => 'OC (Operating Commander)', 'description' => 'First level verification officer (OC Approval)', 'is_system' => false]
         );
-        $inspectorRole->permissions()->sync([
-            $permModels['items.view']->id,
-            $permModels['stock.create']->id,
-            $permModels['stock.approve']->id,
+        $roleOC->permissions()->sync([$permModels['items.view']->id, $permModels['stock.approve']->id]);
+
+        $roleQM = Role::firstOrCreate(
+            ['organization_id' => $apexOrg->id, 'slug' => 'qm'],
+            ['name' => 'QM (Quality Manager)', 'description' => 'Second level quality control officer (QM Approval)', 'is_system' => false]
+        );
+        $roleQM->permissions()->sync([$permModels['items.view']->id, $permModels['stock.approve']->id]);
+
+        $roleCO = Role::firstOrCreate(
+            ['organization_id' => $apexOrg->id, 'slug' => 'co'],
+            ['name' => 'CO (Commanding Officer)', 'description' => 'Final authorizing officer (CO Approval)', 'is_system' => false]
+        );
+        $roleCO->permissions()->sync([$permModels['items.view']->id, $permModels['stock.approve']->id]);
+
+        $roleStoremen = Role::firstOrCreate(
+            ['organization_id' => $apexOrg->id, 'slug' => 'storemen'],
+            ['name' => 'Storemen', 'description' => 'Physical store keeper executing item issues and stock updates', 'is_system' => false]
+        );
+        $roleStoremen->permissions()->sync([$permModels['items.view']->id, $permModels['stock.dispatch']->id]);
+
+        // Seed Users for each PDF Flowchart Role
+        $userClerk = User::firstOrCreate(['email' => 'clerk@apexlogistics.com'], [
+            'organization_id' => $apexOrg->id, 'name' => 'Sam Subject Clerk', 'password' => Hash::make('password'), 'is_super_admin' => false, 'is_org_admin' => false, 'status' => 'active'
         ]);
+        $userClerk->roles()->sync([$roleClerk->id]);
 
-        $operatorRole = Role::firstOrCreate(
-            ['organization_id' => $apexOrg->id, 'slug' => 'warehouse-operator'],
-            ['name' => 'Warehouse Operator', 'description' => 'Performs physical warehouse receiving and movement entries', 'is_system' => false]
-        );
-        $operatorRole->permissions()->sync([
-            $permModels['items.view']->id,
-            $permModels['stock.create']->id,
+        $userOC = User::firstOrCreate(['email' => 'oc@apexlogistics.com'], [
+            'organization_id' => $apexOrg->id, 'name' => 'Oliver OC Officer', 'password' => Hash::make('password'), 'is_super_admin' => false, 'is_org_admin' => false, 'status' => 'active'
         ]);
+        $userOC->roles()->sync([$roleOC->id]);
 
-        // Apex Org User (Manager)
-        $apexManagerUser = User::firstOrCreate(
-            ['email' => 'manager@apexlogistics.com'],
-            [
-                'organization_id' => $apexOrg->id,
-                'name' => 'David Manager',
-                'password' => Hash::make('password'),
-                'is_super_admin' => false,
-                'is_org_admin' => false,
-                'status' => 'active',
-            ]
+        $userQM = User::firstOrCreate(['email' => 'qm@apexlogistics.com'], [
+            'organization_id' => $apexOrg->id, 'name' => 'Quincy QM Inspector', 'password' => Hash::make('password'), 'is_super_admin' => false, 'is_org_admin' => false, 'status' => 'active'
+        ]);
+        $userQM->roles()->sync([$roleQM->id]);
+
+        $userCO = User::firstOrCreate(['email' => 'co@apexlogistics.com'], [
+            'organization_id' => $apexOrg->id, 'name' => 'Charles CO Commander', 'password' => Hash::make('password'), 'is_super_admin' => false, 'is_org_admin' => false, 'status' => 'active'
+        ]);
+        $userCO->roles()->sync([$roleCO->id]);
+
+        $userStoremen = User::firstOrCreate(['email' => 'storemen@apexlogistics.com'], [
+            'organization_id' => $apexOrg->id, 'name' => 'Steven Storemen', 'password' => Hash::make('password'), 'is_super_admin' => false, 'is_org_admin' => false, 'status' => 'active'
+        ]);
+        $userStoremen->roles()->sync([$roleStoremen->id]);
+
+        // Seed External API Token for Workshop Management System Integration
+        ApiToken::firstOrCreate(
+            ['organization_id' => $apexOrg->id, 'name' => 'Workshop Management System Server Integration'],
+            ['token' => 'wms_demo_token_apex123', 'status' => 'active']
         );
-        $apexManagerUser->roles()->sync([$managerRole->id]);
 
         // Master Data for Apex Logistics
         $catElectronics = Category::create(['organization_id' => $apexOrg->id, 'name' => 'Electronics & Computing', 'description' => 'Laptops, monitors, components']);
         $catParts = Category::create(['organization_id' => $apexOrg->id, 'name' => 'Industrial Parts', 'description' => 'Cables, sensors, robotics parts']);
 
         $whMain = Warehouse::create(['organization_id' => $apexOrg->id, 'name' => 'Main Distribution Hub', 'code' => 'WH-MAIN', 'location' => 'Zone A Depot']);
-        $whQC = Warehouse::create(['organization_id' => $apexOrg->id, 'name' => 'Quality Inspection Vault', 'code' => 'WH-QC', 'location' => 'Zone B Hangar']);
-
-        $supplierA = Supplier::create(['organization_id' => $apexOrg->id, 'name' => 'Apex Components Inc', 'email' => 'orders@apexcomp.com', 'phone' => '+1 800 555 1111']);
-        $supplierB = Supplier::create(['organization_id' => $apexOrg->id, 'name' => 'Global Tech Distributors', 'email' => 'sales@globaltech.com', 'phone' => '+1 800 555 2222']);
 
         $itemLaptop = InventoryItem::create([
             'organization_id' => $apexOrg->id,
@@ -153,19 +173,6 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
         ]);
 
-        $itemMonitor = InventoryItem::create([
-            'organization_id' => $apexOrg->id,
-            'category_id' => $catElectronics->id,
-            'sku' => 'MON-4K27',
-            'name' => '27-inch UltraHD IPS Monitor',
-            'description' => '4K USB-C Color-Calibrated Display',
-            'unit' => 'pcs',
-            'unit_cost' => 420.00,
-            'reorder_level' => 15,
-            'current_stock' => 28,
-            'status' => 'active',
-        ]);
-
         $itemCable = InventoryItem::create([
             'organization_id' => $apexOrg->id,
             'category_id' => $catParts->id,
@@ -175,137 +182,153 @@ class DatabaseSeeder extends Seeder
             'unit' => 'pcs',
             'unit_cost' => 24.50,
             'reorder_level' => 25,
-            'current_stock' => 4, // LOW STOCK TRIGGER!
+            'current_stock' => 50,
             'status' => 'active',
         ]);
 
-        // Pre-configured Stock Movement UI Workflow for Apex Logistics
-        $smWorkflow = WorkflowDefinition::create([
+        // 5. Seed Pre-configured Workflow 1: "Add Items to Main Stock Workflow" (PDF Page 2 Flowchart)
+        $addStockWf = WorkflowDefinition::create([
             'organization_id' => $apexOrg->id,
-            'name' => 'Stock Movement Quality Inspection Workflow',
+            'name' => 'Add Items to Main Stock Workflow (OC -> QM -> CO)',
             'entity_type' => 'StockMovement',
-            'description' => 'Multi-step verification requiring QC inspection before stock release.',
+            'description' => 'Multi-tier approval pipeline for adding new item lots to main stock',
             'is_active' => true,
         ]);
 
-        $stDraft = WorkflowState::create(['workflow_definition_id' => $smWorkflow->id, 'code' => 'draft', 'name' => 'Draft Requisition', 'color' => 'slate', 'is_initial' => true, 'is_final' => false]);
-        $stInspection = WorkflowState::create(['workflow_definition_id' => $smWorkflow->id, 'code' => 'inspection_pending', 'name' => 'QC Inspection Pending', 'color' => 'amber', 'is_initial' => false, 'is_final' => false]);
-        $stApproved = WorkflowState::create(['workflow_definition_id' => $smWorkflow->id, 'code' => 'completed', 'name' => 'Passed & Released', 'color' => 'emerald', 'is_initial' => false, 'is_final' => true]);
-        $stRejected = WorkflowState::create(['workflow_definition_id' => $smWorkflow->id, 'code' => 'rejected', 'name' => 'Rejected by Quality Control', 'color' => 'rose', 'is_initial' => false, 'is_final' => true]);
+        $stDraft = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'draft', 'name' => 'Requisition Created (Subject Clerk)', 'color' => 'slate', 'is_initial' => true, 'is_final' => false]);
+        $stOC = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'oc_pending', 'name' => 'Awaiting OC Approval', 'color' => 'amber', 'is_initial' => false, 'is_final' => false]);
+        $stQM = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'qm_pending', 'name' => 'Awaiting QM Approval', 'color' => 'purple', 'is_initial' => false, 'is_final' => false]);
+        $stCO = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'co_pending', 'name' => 'Awaiting CO Approval', 'color' => 'indigo', 'is_initial' => false, 'is_final' => false]);
+        $stCompleted = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'completed', 'name' => 'Approved & Stock Added', 'color' => 'emerald', 'is_initial' => false, 'is_final' => true]);
+        $stRejected = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'rejected', 'name' => 'Rejected by Approval Authority', 'color' => 'rose', 'is_initial' => false, 'is_final' => true]);
 
+        // Subject Clerk -> Submit to OC
         WorkflowTransition::create([
-            'workflow_definition_id' => $smWorkflow->id,
+            'workflow_definition_id' => $addStockWf->id,
             'from_state_id' => $stDraft->id,
-            'to_state_id' => $stInspection->id,
-            'action_name' => 'Submit for QC Inspection',
-            'allowed_roles' => ['warehouse-operator', 'inventory-manager'],
+            'to_state_id' => $stOC->id,
+            'action_name' => 'Submit Stock Requisition to OC',
+            'allowed_roles' => ['subject-clerk', 'inventory-manager'],
             'requires_note' => false,
         ]);
 
+        // OC -> QM (Approved) OR Reject
         WorkflowTransition::create([
-            'workflow_definition_id' => $smWorkflow->id,
-            'from_state_id' => $stInspection->id,
-            'to_state_id' => $stApproved->id,
-            'action_name' => 'Approve & Release Stock',
-            'allowed_roles' => ['quality-inspector', 'inventory-manager'],
-            'requires_note' => true,
+            'workflow_definition_id' => $addStockWf->id,
+            'from_state_id' => $stOC->id,
+            'to_state_id' => $stQM->id,
+            'action_name' => 'OC Approved & Forward to QM',
+            'allowed_roles' => ['oc'],
+            'requires_note' => false,
         ]);
-
         WorkflowTransition::create([
-            'workflow_definition_id' => $smWorkflow->id,
-            'from_state_id' => $stInspection->id,
+            'workflow_definition_id' => $addStockWf->id,
+            'from_state_id' => $stOC->id,
             'to_state_id' => $stRejected->id,
-            'action_name' => 'Fail QC & Reject Stock',
-            'allowed_roles' => ['quality-inspector'],
+            'action_name' => 'OC Reject Information',
+            'allowed_roles' => ['oc'],
             'requires_note' => true,
         ]);
 
-        // Sample Stock Movements
-        $sm1 = StockMovement::create([
+        // QM -> CO (Approved) OR Reject
+        WorkflowTransition::create([
+            'workflow_definition_id' => $addStockWf->id,
+            'from_state_id' => $stQM->id,
+            'to_state_id' => $stCO->id,
+            'action_name' => 'QM Approved & Forward to CO',
+            'allowed_roles' => ['qm'],
+            'requires_note' => false,
+        ]);
+        WorkflowTransition::create([
+            'workflow_definition_id' => $addStockWf->id,
+            'from_state_id' => $stQM->id,
+            'to_state_id' => $stRejected->id,
+            'action_name' => 'QM Reject Information',
+            'allowed_roles' => ['qm'],
+            'requires_note' => true,
+        ]);
+
+        // CO -> Final Approval (Add Items & Send Notification) OR Reject
+        WorkflowTransition::create([
+            'workflow_definition_id' => $addStockWf->id,
+            'from_state_id' => $stCO->id,
+            'to_state_id' => $stCompleted->id,
+            'action_name' => 'CO Approve & Add Items to Stock',
+            'allowed_roles' => ['co'],
+            'requires_note' => false,
+        ]);
+        WorkflowTransition::create([
+            'workflow_definition_id' => $addStockWf->id,
+            'from_state_id' => $stCO->id,
+            'to_state_id' => $stRejected->id,
+            'action_name' => 'CO Reject Information',
+            'allowed_roles' => ['co'],
+            'requires_note' => true,
+        ]);
+
+        // Seed Sample Inbound Stock Request (Add items to main stock)
+        $smInbound = StockMovement::create([
             'organization_id' => $apexOrg->id,
-            'reference_code' => 'SM-INB001',
+            'reference_code' => 'SM-ADD-001',
             'type' => 'inbound',
             'warehouse_id' => $whMain->id,
             'inventory_item_id' => $itemLaptop->id,
-            'quantity' => 10,
-            'current_state' => 'inspection_pending',
-            'created_by' => $apexAdmin->id,
-            'notes' => 'Shipment received from Dell.',
+            'quantity' => 15,
+            'item_lot_number' => 'LOT-2026-DEL1',
+            'source_system' => 'manual',
+            'current_state' => 'oc_pending',
+            'created_by' => $userClerk->id,
+            'notes' => 'Subject Clerk entered new lot of 15 XPS Developer laptops.',
         ]);
 
         WorkflowLog::create([
             'organization_id' => $apexOrg->id,
             'entity_type' => 'StockMovement',
-            'entity_id' => $sm1->id,
+            'entity_id' => $smInbound->id,
             'from_state' => 'draft',
-            'to_state' => 'inspection_pending',
-            'action' => 'Submit for QC Inspection',
-            'user_id' => $apexAdmin->id,
-            'notes' => 'Submitted to inspector team.',
+            'to_state' => 'oc_pending',
+            'action' => 'Submit Stock Requisition to OC',
+            'user_id' => $userClerk->id,
+            'notes' => 'Submitted item lot details to OC for verification.',
         ]);
 
-        // Pre-configured Purchase Order Workflow
-        $poWorkflow = WorkflowDefinition::create([
+        // Seed Sample Workshop Management System API Outbound Request (Item Request Process)
+        $smOutbound = StockMovement::create([
             'organization_id' => $apexOrg->id,
-            'name' => 'Purchase Order Approval Workflow',
-            'entity_type' => 'PurchaseOrder',
-            'description' => 'Multi-tier purchase order approval process',
-            'is_active' => true,
-        ]);
-
-        $poDraft = WorkflowState::create(['workflow_definition_id' => $poWorkflow->id, 'code' => 'draft', 'name' => 'Draft PO', 'color' => 'slate', 'is_initial' => true, 'is_final' => false]);
-        $poReview = WorkflowState::create(['workflow_definition_id' => $poWorkflow->id, 'code' => 'under_review', 'name' => 'Manager Review', 'color' => 'amber', 'is_initial' => false, 'is_final' => false]);
-        $poOrdered = WorkflowState::create(['workflow_definition_id' => $poWorkflow->id, 'code' => 'ordered', 'name' => 'Supplier Ordered', 'color' => 'indigo', 'is_initial' => false, 'is_final' => false]);
-        $poCompleted = WorkflowState::create(['workflow_definition_id' => $poWorkflow->id, 'code' => 'completed', 'name' => 'Completed & Received', 'color' => 'emerald', 'is_initial' => false, 'is_final' => true]);
-
-        WorkflowTransition::create([
-            'workflow_definition_id' => $poWorkflow->id,
-            'from_state_id' => $poDraft->id,
-            'to_state_id' => $poReview->id,
-            'action_name' => 'Submit PO for Manager Approval',
-            'allowed_roles' => [],
-            'requires_note' => false,
-        ]);
-
-        WorkflowTransition::create([
-            'workflow_definition_id' => $poWorkflow->id,
-            'from_state_id' => $poReview->id,
-            'to_state_id' => $poOrdered->id,
-            'action_name' => 'Approve & Transmit PO to Supplier',
-            'allowed_roles' => ['inventory-manager'],
-            'requires_note' => true,
-        ]);
-
-        WorkflowTransition::create([
-            'workflow_definition_id' => $poWorkflow->id,
-            'from_state_id' => $poOrdered->id,
-            'to_state_id' => $poCompleted->id,
-            'action_name' => 'Mark Fully Received & Completed',
-            'allowed_roles' => ['inventory-manager'],
-            'requires_note' => false,
-        ]);
-
-        // Sample PO
-        $po1 = PurchaseOrder::create([
-            'organization_id' => $apexOrg->id,
-            'po_number' => 'PO-20260811-0001',
-            'supplier_id' => $supplierA->id,
+            'reference_code' => 'REQ-WMS-8812',
+            'type' => 'outbound',
             'warehouse_id' => $whMain->id,
-            'total_amount' => 18500.00,
-            'current_state' => 'under_review',
-            'created_by' => $apexAdmin->id,
-            'notes' => 'Urgent restocking order for developer laptops.',
-        ]);
-
-        PurchaseOrderItem::create([
-            'purchase_order_id' => $po1->id,
-            'inventory_item_id' => $itemLaptop->id,
+            'inventory_item_id' => $itemCable->id,
             'quantity' => 10,
-            'unit_price' => 1850.00,
-            'subtotal' => 18500.00,
+            'item_lot_number' => 'LOT-WMS-55',
+            'source_system' => 'workshop_api',
+            'current_state' => 'oc_pending',
+            'created_by' => null, // Created via API
+            'notes' => 'Item Request received via API from Workshop Management System for Robot Assembly Station B.',
         ]);
 
-        // 4. Seed Demo Tenant Organization 2: Nexus Global (Proves Complete Data Isolation!)
+        // Seed Initial Notifications
+        Notification::create([
+            'organization_id' => $apexOrg->id,
+            'user_id' => $userOC->id,
+            'title' => 'New Stock Lot Request awaiting OC Approval',
+            'message' => 'Subject Clerk submitted request SM-ADD-001 (Lot: LOT-2026-DEL1) for 15 Dell Laptops.',
+            'type' => 'approval_needed',
+            'link_url' => route('stock.show', $smInbound->id),
+            'is_read' => false,
+        ]);
+
+        Notification::create([
+            'organization_id' => $apexOrg->id,
+            'user_id' => $userOC->id,
+            'title' => 'Workshop Management System API Item Request',
+            'message' => 'Workshop API requested 10 Fiber Optic Cables (REQ-WMS-8812). Awaiting OC verification.',
+            'type' => 'approval_needed',
+            'link_url' => route('stock.show', $smOutbound->id),
+            'is_read' => false,
+        ]);
+
+        // 6. Seed Demo Tenant Organization 2: Nexus Global (Proves Complete Data Isolation!)
         $nexusOrg = Organization::firstOrCreate(
             ['code' => 'nexus'],
             [

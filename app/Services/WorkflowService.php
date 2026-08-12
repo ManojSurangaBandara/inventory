@@ -15,6 +15,13 @@ use Illuminate\Support\Facades\DB;
 
 class WorkflowService
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * Get active workflow definition for entity type.
      */
@@ -88,6 +95,11 @@ class WorkflowService
             $toStateCode = $transition->toState->code;
 
             $entity->current_state = $toStateCode;
+
+            if ($entity instanceof StockMovement && (str_contains(strtolower($toStateCode), 'reject') || $toStateCode === 'rejected')) {
+                $entity->rejection_reason = $notes;
+            }
+
             $entity->save();
 
             // Record audit log
@@ -102,9 +114,9 @@ class WorkflowService
                 'notes' => $notes,
             ]);
 
-            // Entity specific side-effects (e.g., Stock Movement finalization)
+            // Entity specific side-effects & Notifications
             if ($entity instanceof StockMovement) {
-                $this->applyStockMovementEffects($entity, $transition->toState);
+                $this->applyStockMovementEffects($entity, $transition->toState, $user, $notes);
             }
         });
 
@@ -112,23 +124,50 @@ class WorkflowService
     }
 
     /**
-     * Apply stock adjustments when stock movement reaches approved / final status.
+     * Apply stock adjustments and dispatch notifications when stock movement state changes.
      */
-    protected function applyStockMovementEffects(StockMovement $movement, WorkflowState $toState): void
+    protected function applyStockMovementEffects(StockMovement $movement, WorkflowState $toState, User $actor, ?string $notes = null): void
     {
-        // If state is final or code indicates completed/approved
-        if ($toState->is_final || in_array($toState->code, ['completed', 'approved', 'dispatched'])) {
-            $item = InventoryItem::find($movement->inventory_item_id);
-            if (!$item) return;
+        $toCode = strtolower($toState->code);
 
-            if ($movement->type === 'inbound') {
-                $item->increment('current_stock', $movement->quantity);
-            } elseif ($movement->type === 'outbound') {
-                $item->decrement('current_stock', min($item->current_stock, $movement->quantity));
-            } elseif ($movement->type === 'adjustment') {
-                $item->current_stock = max(0, $movement->quantity);
-                $item->save();
+        // Case 1: Rejection
+        if ($toState->is_final && (str_contains($toCode, 'reject') || $toCode === 'rejected')) {
+            $actorRoleName = $actor->roles->first()?->name ?? ($actor->isOrgAdmin() ? 'Org Admin' : 'Approver');
+            $this->notificationService->notifyRejection($movement, $actorRoleName, $notes ?? 'Information incorrect or rejected.');
+            return;
+        }
+
+        // Case 2: Final Approval & Fulfillment
+        if ($toState->is_final || in_array($toCode, ['completed', 'approved', 'dispatched', 'issued'])) {
+            $item = InventoryItem::find($movement->inventory_item_id);
+            if ($item) {
+                if ($movement->type === 'inbound') {
+                    $item->increment('current_stock', $movement->quantity);
+                } elseif ($movement->type === 'outbound') {
+                    $item->decrement('current_stock', min($item->current_stock, $movement->quantity));
+                } elseif ($movement->type === 'adjustment') {
+                    $item->current_stock = max(0, $movement->quantity);
+                    $item->save();
+                }
+            }
+
+            $this->notificationService->notifyCompletion($movement, $movement->type);
+            return;
+        }
+
+        // Case 3: Advanced to next intermediate approval step
+        $nextTransitions = WorkflowTransition::where('workflow_definition_id', $toState->workflow_definition_id)
+            ->where('from_state_id', $toState->id)
+            ->get();
+
+        $allowedRoles = [];
+        foreach ($nextTransitions as $nt) {
+            if (is_array($nt->allowed_roles)) {
+                $allowedRoles = array_merge($allowedRoles, $nt->allowed_roles);
             }
         }
+        $allowedRoles = array_unique($allowedRoles);
+
+        $this->notificationService->notifyNextApprovers($movement, $toState->name, $allowedRoles);
     }
 }

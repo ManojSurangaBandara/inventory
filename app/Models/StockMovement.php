@@ -19,9 +19,12 @@ class StockMovement extends Model
         'target_warehouse_id',
         'inventory_item_id',
         'quantity',
+        'item_lot_number',
+        'source_system',
         'current_state',
         'created_by',
         'notes',
+        'rejection_reason',
     ];
 
     public function warehouse(): BelongsTo

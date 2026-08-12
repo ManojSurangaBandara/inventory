@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrgAdminController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\StockMovementController;
@@ -32,6 +34,11 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Notifications Routes
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
+
     /*
     |--------------------------------------------------------------------------
     | Super Admin Routes (No Organization / Global Scope)
@@ -47,7 +54,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Organization Admin Routes (Users, Custom Roles, UI Workflows)
+    | Organization Admin Routes (Users, Custom Roles, API Tokens, UI Workflows)
     |--------------------------------------------------------------------------
     */
     Route::middleware(['orgadmin'])->prefix('admin')->as('orgadmin.')->group(function () {
@@ -60,6 +67,11 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
         Route::get('/roles', [OrgAdminController::class, 'roles'])->name('roles');
         Route::post('/roles', [OrgAdminController::class, 'storeRole'])->name('roles.store');
         Route::put('/roles/{id}', [OrgAdminController::class, 'updateRole'])->name('roles.update');
+
+        // API Token management (Workshop Management System)
+        Route::get('/tokens', [ApiTokenController::class, 'index'])->name('tokens');
+        Route::post('/tokens', [ApiTokenController::class, 'store'])->name('tokens.store');
+        Route::delete('/tokens/{id}', [ApiTokenController::class, 'destroy'])->name('tokens.destroy');
     });
 
     /*

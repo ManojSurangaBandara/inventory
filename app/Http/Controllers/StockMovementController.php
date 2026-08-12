@@ -6,6 +6,7 @@ use App\Models\InventoryItem;
 use App\Models\StockMovement;
 use App\Models\Warehouse;
 use App\Models\WorkflowLog;
+use App\Services\NotificationService;
 use App\Services\WorkflowService;
 use Exception;
 use Illuminate\Http\Request;
@@ -15,10 +16,12 @@ use Illuminate\Support\Str;
 class StockMovementController extends Controller
 {
     protected WorkflowService $workflowService;
+    protected NotificationService $notificationService;
 
-    public function __construct(WorkflowService $workflowService)
+    public function __construct(WorkflowService $workflowService, NotificationService $notificationService)
     {
         $this->workflowService = $workflowService;
+        $this->notificationService = $notificationService;
     }
 
     public function index()
@@ -29,7 +32,7 @@ class StockMovementController extends Controller
 
         // Get workflow definition and state colors for UI rendering
         $workflow = $this->workflowService->getActiveWorkflow('StockMovement', Auth::user()->organization_id);
-        
+
         $availableTransitionsMap = [];
         $stateDetailsMap = [];
 
@@ -53,13 +56,20 @@ class StockMovementController extends Controller
             'warehouse_id' => 'required|exists:warehouses,id',
             'target_warehouse_id' => 'nullable|required_if:type,transfer|exists:warehouses,id',
             'quantity' => 'required|integer|min:1',
+            'item_lot_number' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
         ]);
 
         $workflow = $this->workflowService->getActiveWorkflow('StockMovement', Auth::user()->organization_id);
         $initialStateCode = $workflow && $workflow->initialState() ? $workflow->initialState()->code : 'draft';
 
-        $refCode = 'SM-' . strtoupper(Str::random(6));
+        $refPrefix = ($request->type === 'inbound') ? 'SM-ADD-' : 'SM-REQ-';
+        $refCode = $refPrefix . strtoupper(Str::random(6));
+
+        $lotNumber = $request->input('item_lot_number');
+        if (empty($lotNumber)) {
+            $lotNumber = 'LOT-' . date('Ymd') . '-' . rand(100, 999);
+        }
 
         $movement = StockMovement::create([
             'organization_id' => Auth::user()->organization_id,
@@ -69,6 +79,8 @@ class StockMovementController extends Controller
             'target_warehouse_id' => $request->target_warehouse_id,
             'inventory_item_id' => $request->inventory_item_id,
             'quantity' => $request->quantity,
+            'item_lot_number' => $lotNumber,
+            'source_system' => 'manual',
             'current_state' => $initialStateCode,
             'created_by' => Auth::id(),
             'notes' => $request->notes,
@@ -81,12 +93,22 @@ class StockMovementController extends Controller
             'entity_id' => $movement->id,
             'from_state' => null,
             'to_state' => $initialStateCode,
-            'action' => 'Created Stock Movement',
+            'action' => 'Created Stock Requisition',
             'user_id' => Auth::id(),
-            'notes' => 'Stock movement record initiated.',
+            'notes' => "Initiated request for Lot: {$movement->item_lot_number}",
         ]);
 
-        return redirect()->route('stock.index')->with('success', "Stock Movement '{$refCode}' created in '{$initialStateCode}' state.");
+        // Trigger notification to Level 1 approvers (e.g., OC)
+        $this->notificationService->sendToRole(
+            Auth::user()->organization_id,
+            'oc',
+            "New Stock Request Created: {$refCode}",
+            "Subject Clerk / User created stock request {$refCode} (Lot: {$lotNumber}). Awaiting OC approval.",
+            'approval_needed',
+            route('stock.show', $movement->id)
+        );
+
+        return redirect()->route('stock.index')->with('success', "Stock Request '{$refCode}' (Lot: {$lotNumber}) created successfully.");
     }
 
     public function transition(Request $request, int $id)
@@ -100,9 +122,9 @@ class StockMovementController extends Controller
 
         try {
             $this->workflowService->executeTransition($movement, $request->transition_id, Auth::user(), $request->notes);
-            return redirect()->route('stock.index')->with('success', "Workflow state updated for movement '{$movement->reference_code}'.");
+            return redirect()->back()->with('success', "Workflow state updated for request '{$movement->reference_code}'.");
         } catch (Exception $e) {
-            return redirect()->route('stock.index')->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
@@ -115,8 +137,9 @@ class StockMovementController extends Controller
             ->latest()
             ->get();
 
+        $workflow = $this->workflowService->getActiveWorkflow('StockMovement', Auth::user()->organization_id);
         $availableTransitions = $this->workflowService->getAvailableTransitions($movement, Auth::user());
 
-        return view('stock.show', compact('movement', 'logs', 'availableTransitions'));
+        return view('stock.show', compact('movement', 'logs', 'workflow', 'availableTransitions'));
     }
 }

@@ -124,20 +124,32 @@ class MultiTenantInventoryTest extends TestCase
         $workflow = $service->getActiveWorkflow('StockMovement', $apexAdmin->organization_id);
 
         $transition = WorkflowTransition::where('workflow_definition_id', $workflow->id)
-            ->where('action_name', 'Submit for QC Inspection')
+            ->where('action_name', 'Submit Stock Requisition to OC')
             ->first();
 
-        // Execute Draft -> Inspection Pending
+        // Execute Draft -> OC Pending
         $service->executeTransition($movement, $transition->id, $apexAdmin, 'Submitting test movement');
         $movement->refresh();
-        $this->assertEquals('inspection_pending', $movement->current_state);
+        $this->assertEquals('oc_pending', $movement->current_state);
 
-        // Execute Inspection Pending -> Passed & Released (Terminal state)
+        // Execute OC Approved & Forward to QM -> QM Pending
+        $trOC = WorkflowTransition::where('workflow_definition_id', $workflow->id)
+            ->where('action_name', 'OC Approved & Forward to QM')
+            ->first();
+        $service->executeTransition($movement, $trOC->id, $apexAdmin, 'OC Passed');
+
+        // Execute QM Approved & Forward to CO -> CO Pending
+        $trQM = WorkflowTransition::where('workflow_definition_id', $workflow->id)
+            ->where('action_name', 'QM Approved & Forward to CO')
+            ->first();
+        $service->executeTransition($movement, $trQM->id, $apexAdmin, 'QM Passed');
+
+        // Execute CO Approve & Add Items to Stock -> Completed (Terminal state)
         $approveTransition = WorkflowTransition::where('workflow_definition_id', $workflow->id)
-            ->where('action_name', 'Approve & Release Stock')
+            ->where('action_name', 'CO Approve & Add Items to Stock')
             ->first();
 
-        $service->executeTransition($movement, $approveTransition->id, $apexAdmin, 'QC Inspection Passed');
+        $service->executeTransition($movement, $approveTransition->id, $apexAdmin, 'CO Authorized');
         $movement->refresh();
         $item->refresh();
 

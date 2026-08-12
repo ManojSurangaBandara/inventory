@@ -90,7 +90,7 @@ return new class extends Migration
             $table->foreignId('inventory_item_id')->constrained('inventory_items')->onDelete('cascade');
             $table->integer('quantity');
             $table->string('current_state')->default('draft');
-            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('cascade');
             $table->text('notes')->nullable();
             $table->timestamps();
         });
