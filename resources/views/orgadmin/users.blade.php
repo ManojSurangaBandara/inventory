@@ -203,7 +203,7 @@
 
 <script>
     function editUser(user, roleIds) {
-        document.getElementById('editUserForm').action = "/admin/users/" + user.id;
+        document.getElementById('editUserForm').action = "{{ url('/admin/users') }}/" + user.id;
         document.getElementById('edit_name').value = user.name;
         document.getElementById('edit_email').value = user.email;
         document.getElementById('edit_status').value = user.status;

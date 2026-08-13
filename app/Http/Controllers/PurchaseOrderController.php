@@ -78,6 +78,7 @@ class PurchaseOrderController extends Controller
         foreach ($request->items as $itemData) {
             $subtotal = $itemData['quantity'] * $itemData['unit_price'];
             PurchaseOrderItem::create([
+                'organization_id' => $order->organization_id,
                 'purchase_order_id' => $order->id,
                 'inventory_item_id' => $itemData['inventory_item_id'],
                 'quantity' => $itemData['quantity'],

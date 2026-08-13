@@ -82,8 +82,11 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
     Route::middleware(['orgadmin'])->prefix('workflows')->as('workflows.')->group(function () {
         Route::get('/', [WorkflowController::class, 'index'])->name('index');
         Route::post('/definitions', [WorkflowController::class, 'storeDefinition'])->name('store');
+        Route::delete('/{id}', [WorkflowController::class, 'destroyDefinition'])->name('destroy');
         Route::get('/{id}/builder', [WorkflowController::class, 'builder'])->name('builder');
         Route::post('/{id}/states', [WorkflowController::class, 'storeState'])->name('states.store');
+        Route::post('/{id}/states/reorder', [WorkflowController::class, 'reorderStates'])->name('states.reorder');
+        Route::put('/states/{id}', [WorkflowController::class, 'updateState'])->name('states.update');
         Route::delete('/states/{id}', [WorkflowController::class, 'deleteState'])->name('states.delete');
         Route::post('/{id}/transitions', [WorkflowController::class, 'storeTransition'])->name('transitions.store');
         Route::delete('/transitions/{id}', [WorkflowController::class, 'deleteTransition'])->name('transitions.delete');

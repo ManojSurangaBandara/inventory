@@ -24,10 +24,21 @@
                         <span class="px-2.5 py-1 rounded-full text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold uppercase tracking-wider">
                             {{ $wf->entity_type }}
                         </span>
-                        <span class="flex items-center space-x-1 text-[10px] text-emerald-400 font-semibold">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                            <span>Active</span>
-                        </span>
+                        <div class="flex items-center space-x-2">
+                            <span class="flex items-center space-x-1 text-[10px] text-emerald-400 font-semibold">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                <span>Active</span>
+                            </span>
+                            <form action="{{ route('workflows.destroy', $wf->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete workflow \'{{ $wf->name }}\'?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" title="Delete Workflow" class="text-slate-500 hover:text-rose-400 p-1 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                     <div>
@@ -48,9 +59,11 @@
                     </div>
                 </div>
 
-                <a href="{{ route('workflows.builder', $wf->id) }}" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold text-center transition shadow-md shadow-indigo-600/20 block">
-                    Open Visual Builder &rarr;
-                </a>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('workflows.builder', $wf->id) }}" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold text-center transition shadow-md shadow-indigo-600/20 block">
+                        Open Visual Builder &rarr;
+                    </a>
+                </div>
             </div>
         @empty
             <div class="col-span-full bg-slate-900/40 border border-slate-800 rounded-3xl p-12 text-center text-slate-500 space-y-3">

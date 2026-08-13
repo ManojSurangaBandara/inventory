@@ -23,6 +23,7 @@ return new class extends Migration
 
         Schema::create('workflow_states', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('organization_id')->constrained('organizations')->onDelete('cascade');
             $table->foreignId('workflow_definition_id')->constrained('workflow_definitions')->onDelete('cascade');
             $table->string('code');
             $table->string('name');
@@ -34,6 +35,7 @@ return new class extends Migration
 
         Schema::create('workflow_transitions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('organization_id')->constrained('organizations')->onDelete('cascade');
             $table->foreignId('workflow_definition_id')->constrained('workflow_definitions')->onDelete('cascade');
             $table->foreignId('from_state_id')->constrained('workflow_states')->onDelete('cascade');
             $table->foreignId('to_state_id')->constrained('workflow_states')->onDelete('cascade');

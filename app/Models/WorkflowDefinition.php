@@ -25,7 +25,7 @@ class WorkflowDefinition extends Model
 
     public function states(): HasMany
     {
-        return $this->hasMany(WorkflowState::class);
+        return $this->hasMany(WorkflowState::class)->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
     }
 
     public function transitions(): HasMany

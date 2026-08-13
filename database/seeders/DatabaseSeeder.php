@@ -195,15 +195,16 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $stDraft = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'draft', 'name' => 'Requisition Created (Subject Clerk)', 'color' => 'slate', 'is_initial' => true, 'is_final' => false]);
-        $stOC = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'oc_pending', 'name' => 'Awaiting OC Approval', 'color' => 'amber', 'is_initial' => false, 'is_final' => false]);
-        $stQM = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'qm_pending', 'name' => 'Awaiting QM Approval', 'color' => 'purple', 'is_initial' => false, 'is_final' => false]);
-        $stCO = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'co_pending', 'name' => 'Awaiting CO Approval', 'color' => 'indigo', 'is_initial' => false, 'is_final' => false]);
-        $stCompleted = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'completed', 'name' => 'Approved & Stock Added', 'color' => 'emerald', 'is_initial' => false, 'is_final' => true]);
-        $stRejected = WorkflowState::create(['workflow_definition_id' => $addStockWf->id, 'code' => 'rejected', 'name' => 'Rejected by Approval Authority', 'color' => 'rose', 'is_initial' => false, 'is_final' => true]);
+        $stDraft = WorkflowState::create(['organization_id' => $apexOrg->id, 'workflow_definition_id' => $addStockWf->id, 'code' => 'draft', 'name' => 'Requisition Created (Subject Clerk)', 'color' => 'slate', 'is_initial' => true, 'is_final' => false]);
+        $stOC = WorkflowState::create(['organization_id' => $apexOrg->id, 'workflow_definition_id' => $addStockWf->id, 'code' => 'oc_pending', 'name' => 'Awaiting OC Approval', 'color' => 'amber', 'is_initial' => false, 'is_final' => false]);
+        $stQM = WorkflowState::create(['organization_id' => $apexOrg->id, 'workflow_definition_id' => $addStockWf->id, 'code' => 'qm_pending', 'name' => 'Awaiting QM Approval', 'color' => 'purple', 'is_initial' => false, 'is_final' => false]);
+        $stCO = WorkflowState::create(['organization_id' => $apexOrg->id, 'workflow_definition_id' => $addStockWf->id, 'code' => 'co_pending', 'name' => 'Awaiting CO Approval', 'color' => 'indigo', 'is_initial' => false, 'is_final' => false]);
+        $stCompleted = WorkflowState::create(['organization_id' => $apexOrg->id, 'workflow_definition_id' => $addStockWf->id, 'code' => 'completed', 'name' => 'Approved & Stock Added', 'color' => 'emerald', 'is_initial' => false, 'is_final' => true]);
+        $stRejected = WorkflowState::create(['organization_id' => $apexOrg->id, 'workflow_definition_id' => $addStockWf->id, 'code' => 'rejected', 'name' => 'Rejected by Approval Authority', 'color' => 'rose', 'is_initial' => false, 'is_final' => true]);
 
         // Subject Clerk -> Submit to OC
         WorkflowTransition::create([
+            'organization_id' => $apexOrg->id,
             'workflow_definition_id' => $addStockWf->id,
             'from_state_id' => $stDraft->id,
             'to_state_id' => $stOC->id,
@@ -214,6 +215,7 @@ class DatabaseSeeder extends Seeder
 
         // OC -> QM (Approved) OR Reject
         WorkflowTransition::create([
+            'organization_id' => $apexOrg->id,
             'workflow_definition_id' => $addStockWf->id,
             'from_state_id' => $stOC->id,
             'to_state_id' => $stQM->id,
@@ -222,6 +224,7 @@ class DatabaseSeeder extends Seeder
             'requires_note' => false,
         ]);
         WorkflowTransition::create([
+            'organization_id' => $apexOrg->id,
             'workflow_definition_id' => $addStockWf->id,
             'from_state_id' => $stOC->id,
             'to_state_id' => $stRejected->id,
@@ -232,6 +235,7 @@ class DatabaseSeeder extends Seeder
 
         // QM -> CO (Approved) OR Reject
         WorkflowTransition::create([
+            'organization_id' => $apexOrg->id,
             'workflow_definition_id' => $addStockWf->id,
             'from_state_id' => $stQM->id,
             'to_state_id' => $stCO->id,
@@ -240,6 +244,7 @@ class DatabaseSeeder extends Seeder
             'requires_note' => false,
         ]);
         WorkflowTransition::create([
+            'organization_id' => $apexOrg->id,
             'workflow_definition_id' => $addStockWf->id,
             'from_state_id' => $stQM->id,
             'to_state_id' => $stRejected->id,
@@ -250,6 +255,7 @@ class DatabaseSeeder extends Seeder
 
         // CO -> Final Approval (Add Items & Send Notification) OR Reject
         WorkflowTransition::create([
+            'organization_id' => $apexOrg->id,
             'workflow_definition_id' => $addStockWf->id,
             'from_state_id' => $stCO->id,
             'to_state_id' => $stCompleted->id,
@@ -258,6 +264,7 @@ class DatabaseSeeder extends Seeder
             'requires_note' => false,
         ]);
         WorkflowTransition::create([
+            'organization_id' => $apexOrg->id,
             'workflow_definition_id' => $addStockWf->id,
             'from_state_id' => $stCO->id,
             'to_state_id' => $stRejected->id,

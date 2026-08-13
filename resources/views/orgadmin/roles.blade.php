@@ -161,7 +161,7 @@
 
 <script>
     function editRole(role, permIds) {
-        document.getElementById('editRoleForm').action = "/admin/roles/" + role.id;
+        document.getElementById('editRoleForm').action = "{{ url('/admin/roles') }}/" + role.id;
         document.getElementById('edit_role_name').value = role.name;
         document.getElementById('edit_role_description').value = role.description || '';
 

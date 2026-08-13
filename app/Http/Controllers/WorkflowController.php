@@ -37,41 +37,29 @@ class WorkflowController extends Controller
             'is_active' => true,
         ]);
 
-        // Auto-create default initial 'Draft' state and final 'Completed' state
-        $draftState = WorkflowState::create([
-            'workflow_definition_id' => $workflow->id,
-            'code' => 'draft',
-            'name' => 'Draft',
-            'color' => 'slate',
-            'is_initial' => true,
-            'is_final' => false,
-        ]);
+        return redirect()->route('workflows.builder', $workflow->id)->with('success', "Workflow '{$workflow->name}' created. Add custom state steps to configure the pipeline.");
+    }
 
-        $completedState = WorkflowState::create([
-            'workflow_definition_id' => $workflow->id,
-            'code' => 'completed',
-            'name' => 'Completed',
-            'color' => 'emerald',
-            'is_initial' => false,
-            'is_final' => true,
-        ]);
+    public function destroyDefinition(int $id)
+    {
+        $workflow = WorkflowDefinition::where('organization_id', Auth::user()->organization_id)->findOrFail($id);
+        $name = $workflow->name;
+        $workflow->delete();
 
-        WorkflowTransition::create([
-            'workflow_definition_id' => $workflow->id,
-            'from_state_id' => $draftState->id,
-            'to_state_id' => $completedState->id,
-            'action_name' => 'Complete Process',
-            'allowed_roles' => [],
-            'requires_note' => false,
-        ]);
-
-        return redirect()->route('workflows.builder', $workflow->id)->with('success', "Workflow '{$workflow->name}' created.");
+        return redirect()->route('workflows.index')->with('success', "Workflow '{$name}' deleted.");
     }
 
     public function builder(int $id)
     {
         $workflow = WorkflowDefinition::where('organization_id', Auth::user()->organization_id)
-            ->with(['states.outgoingTransitions.toState', 'transitions.fromState', 'transitions.toState'])
+            ->with([
+                'states' => function ($q) {
+                    $q->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
+                },
+                'states.outgoingTransitions.toState',
+                'transitions.fromState',
+                'transitions.toState'
+            ])
             ->findOrFail($id);
 
         $roles = Role::where('organization_id', Auth::user()->organization_id)->get();
@@ -97,8 +85,44 @@ class WorkflowController extends Controller
             WorkflowState::where('workflow_definition_id', $workflow->id)->update(['is_initial' => false]);
         }
 
+        $maxSort = WorkflowState::where('workflow_definition_id', $workflow->id)->max('sort_order') ?? 0;
+
         WorkflowState::create([
+            'organization_id' => $workflow->organization_id,
             'workflow_definition_id' => $workflow->id,
+            'code' => $code,
+            'name' => $request->name,
+            'color' => $request->color,
+            'is_initial' => $request->boolean('is_initial'),
+            'is_final' => $request->boolean('is_final'),
+            'sort_order' => $maxSort + 1,
+        ]);
+
+        return redirect()->route('workflows.builder', $workflow->id)->with('success', "Workflow State '{$request->name}' added.");
+    }
+
+    public function updateState(Request $request, int $id)
+    {
+        $state = WorkflowState::findOrFail($id);
+        $workflow = WorkflowDefinition::where('organization_id', Auth::user()->organization_id)->findOrFail($state->workflow_definition_id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'color' => 'required|string',
+            'is_initial' => 'nullable|boolean',
+            'is_final' => 'nullable|boolean',
+        ]);
+
+        $code = Str::slug($request->name, '_');
+
+        if ($request->boolean('is_initial')) {
+            // Unset initial flag on other states for this workflow
+            WorkflowState::where('workflow_definition_id', $workflow->id)
+                ->where('id', '!=', $state->id)
+                ->update(['is_initial' => false]);
+        }
+
+        $state->update([
             'code' => $code,
             'name' => $request->name,
             'color' => $request->color,
@@ -106,7 +130,21 @@ class WorkflowController extends Controller
             'is_final' => $request->boolean('is_final'),
         ]);
 
-        return redirect()->route('workflows.builder', $workflow->id)->with('success', "Workflow State '{$request->name}' added.");
+        return redirect()->route('workflows.builder', $workflow->id)->with('success', "Workflow State '{$request->name}' updated.");
+    }
+
+    public function reorderStates(Request $request, int $workflowId)
+    {
+        $workflow = WorkflowDefinition::where('organization_id', Auth::user()->organization_id)->findOrFail($workflowId);
+        $stateIds = $request->input('state_ids', []);
+
+        foreach ($stateIds as $index => $stateId) {
+            WorkflowState::where('workflow_definition_id', $workflow->id)
+                ->where('id', $stateId)
+                ->update(['sort_order' => $index + 1]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'States reordered successfully.']);
     }
 
     public function deleteState(int $id)
@@ -131,6 +169,7 @@ class WorkflowController extends Controller
         ]);
 
         WorkflowTransition::create([
+            'organization_id' => $workflow->organization_id,
             'workflow_definition_id' => $workflow->id,
             'from_state_id' => $request->from_state_id,
             'to_state_id' => $request->to_state_id,

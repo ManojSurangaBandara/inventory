@@ -177,7 +177,7 @@
 
 <script>
     function triggerPOTransition(poId, transitionId, actionName, requiresNote) {
-        document.getElementById('poTransitionForm').action = "/orders/" + poId + "/transition";
+        document.getElementById('poTransitionForm').action = "{{ url('/orders') }}/" + poId + "/transition";
         document.getElementById('po_tr_transition_id').value = transitionId;
         document.getElementById('po_tr_action_name').textContent = actionName;
         document.getElementById('po_tr_notes').value = '';

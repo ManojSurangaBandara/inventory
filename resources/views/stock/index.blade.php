@@ -220,7 +220,7 @@
 
 <script>
     function triggerTransition(movementId, transitionId, actionName, requiresNote) {
-        document.getElementById('transitionForm').action = "/stock/" + movementId + "/transition";
+        document.getElementById('transitionForm').action = "{{ url('/stock') }}/" + movementId + "/transition";
         document.getElementById('tr_transition_id').value = transitionId;
         document.getElementById('tr_action_name').textContent = actionName;
         document.getElementById('tr_notes').value = '';

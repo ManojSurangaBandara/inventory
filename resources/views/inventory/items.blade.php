@@ -238,7 +238,7 @@
 
 <script>
     function editItem(item) {
-        document.getElementById('editItemForm').action = "/inventory/items/" + item.id;
+        document.getElementById('editItemForm').action = "{{ url('/inventory/items') }}/" + item.id;
         document.getElementById('edit_sku').value = item.sku;
         document.getElementById('edit_name').value = item.name;
         document.getElementById('edit_category_id').value = item.category_id || '';
