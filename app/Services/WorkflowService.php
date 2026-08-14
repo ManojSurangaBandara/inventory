@@ -139,15 +139,34 @@ class WorkflowService
 
         // Case 2: Final Approval & Fulfillment
         if ($toState->is_final || in_array($toCode, ['completed', 'approved', 'dispatched', 'issued'])) {
-            $item = InventoryItem::find($movement->inventory_item_id);
-            if ($item) {
-                if ($movement->type === 'inbound') {
-                    $item->increment('current_stock', $movement->quantity);
-                } elseif ($movement->type === 'outbound') {
-                    $item->decrement('current_stock', min($item->current_stock, $movement->quantity));
-                } elseif ($movement->type === 'adjustment') {
-                    $item->current_stock = max(0, $movement->quantity);
-                    $item->save();
+            $movement->loadMissing('items.item');
+
+            if ($movement->items->isNotEmpty()) {
+                foreach ($movement->items as $movementItem) {
+                    $item = $movementItem->item ?? InventoryItem::find($movementItem->inventory_item_id);
+                    if ($item) {
+                        if ($movement->type === 'inbound') {
+                            $item->increment('current_stock', $movementItem->quantity);
+                        } elseif ($movement->type === 'outbound') {
+                            $item->decrement('current_stock', min($item->current_stock, $movementItem->quantity));
+                        } elseif ($movement->type === 'adjustment') {
+                            $item->current_stock = max(0, $movementItem->quantity);
+                            $item->save();
+                        }
+                    }
+                }
+            } elseif ($movement->inventory_item_id) {
+                // Fallback for single item movement
+                $item = InventoryItem::find($movement->inventory_item_id);
+                if ($item) {
+                    if ($movement->type === 'inbound') {
+                        $item->increment('current_stock', $movement->quantity);
+                    } elseif ($movement->type === 'outbound') {
+                        $item->decrement('current_stock', min($item->current_stock, $movement->quantity));
+                    } elseif ($movement->type === 'adjustment') {
+                        $item->current_stock = max(0, $movement->quantity);
+                        $item->save();
+                    }
                 }
             }
 

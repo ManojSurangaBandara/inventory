@@ -6,6 +6,7 @@ use App\Traits\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StockMovement extends Model
 {
@@ -42,8 +43,24 @@ class StockMovement extends Model
         return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
     }
 
+    public function items(): HasMany
+    {
+        return $this->hasMany(StockMovementItem::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get total quantity across all line items (or fallback to legacy single quantity).
+     */
+    public function getTotalQuantityAttribute(): int
+    {
+        if ($this->items()->exists()) {
+            return (int) $this->items()->sum('quantity');
+        }
+        return (int) ($this->quantity ?? 0);
     }
 }

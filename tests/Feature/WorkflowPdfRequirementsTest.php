@@ -24,45 +24,66 @@ class WorkflowPdfRequirementsTest extends TestCase
         $this->seed();
     }
 
-    /** @test */
-    public function external_workshop_management_system_can_create_item_request_via_api()
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function external_workshop_management_system_can_create_multi_item_request_via_api()
     {
         $response = $this->withHeaders([
             'X-API-Key' => 'wms_demo_token_apex123',
             'Accept' => 'application/json',
         ])->postJson('/api/v1/item-requests', [
-            'sku' => 'LAP-XPS15',
-            'quantity' => 3,
-            'lot_number' => 'LOT-WMS-TEST-001',
-            'notes' => 'Workshop Dept 4 Requisition',
+            'items' => [
+                [
+                    'sku' => 'LAP-XPS15',
+                    'quantity' => 3,
+                    'lot_number' => 'LOT-WMS-TEST-001',
+                ],
+                [
+                    'sku' => 'CAB-FIBER10M',
+                    'quantity' => 5,
+                    'lot_number' => 'LOT-WMS-TEST-002',
+                ]
+            ],
+            'notes' => 'Workshop Dept 4 Multi-item Requisition',
         ]);
 
         $response->assertStatus(201)
             ->assertJson([
                 'success' => true,
                 'data' => [
-                    'item_sku' => 'LAP-XPS15',
-                    'quantity' => 3,
-                    'lot_number' => 'LOT-WMS-TEST-001',
+                    'total_items_count' => 2,
+                    'total_quantity' => 8,
                     'source_system' => 'workshop_api',
                 ]
             ]);
 
         $this->assertDatabaseHas('stock_movements', [
-            'item_lot_number' => 'LOT-WMS-TEST-001',
             'source_system' => 'workshop_api',
+            'quantity' => 8,
+        ]);
+
+        $this->assertDatabaseHas('stock_movement_items', [
+            'item_lot_number' => 'LOT-WMS-TEST-001',
             'quantity' => 3,
+        ]);
+
+        $this->assertDatabaseHas('stock_movement_items', [
+            'item_lot_number' => 'LOT-WMS-TEST-002',
+            'quantity' => 5,
         ]);
     }
 
-    /** @test */
-    public function full_approval_chain_oc_qm_co_executes_and_adds_stock()
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function full_approval_chain_oc_qm_co_executes_and_adds_stock_for_multi_items()
     {
-        $movement = StockMovement::where('reference_code', 'SM-ADD-001')->first();
+        $movement = StockMovement::where('reference_code', 'SM-ADD-001')->with('items.item')->first();
         $this->assertNotNull($movement);
         $this->assertEquals('oc_pending', $movement->current_state);
 
-        $initialStock = $movement->item->current_stock;
+        $itemLaptop = InventoryItem::where('sku', 'LAP-XPS15')->first();
+        $itemCable = InventoryItem::where('sku', 'CAB-FIBER10M')->first();
+
+        $initialLaptopStock = $itemLaptop->current_stock;
+        $initialCableStock = $itemCable->current_stock;
 
         // Step 1: OC Approves
         $userOC = User::where('email', 'oc@apexlogistics.com')->first();
@@ -106,11 +127,12 @@ class WorkflowPdfRequirementsTest extends TestCase
         $movement->refresh();
         $this->assertEquals('completed', $movement->current_state);
 
-        // Verify Stock Addition
-        $this->assertEquals($initialStock + 15, $movement->item->fresh()->current_stock);
+        // Verify Multi-Item Stock Additions
+        $this->assertEquals($initialLaptopStock + 15, $itemLaptop->fresh()->current_stock);
+        $this->assertEquals($initialCableStock + 10, $itemCable->fresh()->current_stock);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function rejection_by_authority_locks_request_and_creates_notification()
     {
         $movement = StockMovement::where('reference_code', 'SM-ADD-001')->first();

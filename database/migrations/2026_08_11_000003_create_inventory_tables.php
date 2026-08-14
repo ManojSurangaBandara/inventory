@@ -88,8 +88,8 @@ return new class extends Migration
             $table->string('type'); // inbound, outbound, transfer, adjustment
             $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('cascade');
             $table->foreignId('target_warehouse_id')->nullable()->constrained('warehouses')->onDelete('set null');
-            $table->foreignId('inventory_item_id')->constrained('inventory_items')->onDelete('cascade');
-            $table->integer('quantity');
+            $table->foreignId('inventory_item_id')->nullable()->constrained('inventory_items')->onDelete('cascade');
+            $table->integer('quantity')->nullable();
             $table->string('current_state')->default('draft');
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('cascade');
             $table->text('notes')->nullable();

@@ -12,6 +12,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Role;
 use App\Models\StockMovement;
+use App\Models\StockMovementItem;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -280,12 +281,28 @@ class DatabaseSeeder extends Seeder
             'type' => 'inbound',
             'warehouse_id' => $whMain->id,
             'inventory_item_id' => $itemLaptop->id,
-            'quantity' => 15,
-            'item_lot_number' => 'LOT-2026-DEL1',
+            'quantity' => 25,
+            'item_lot_number' => 'LOT-2026-DEL1, LOT-2026-CAB1',
             'source_system' => 'manual',
             'current_state' => 'oc_pending',
             'created_by' => $userClerk->id,
-            'notes' => 'Subject Clerk entered new lot of 15 XPS Developer laptops.',
+            'notes' => 'Subject Clerk entered new multi-item lot of XPS Developer laptops and Fiber Cables.',
+        ]);
+
+        StockMovementItem::create([
+            'organization_id' => $apexOrg->id,
+            'stock_movement_id' => $smInbound->id,
+            'inventory_item_id' => $itemLaptop->id,
+            'quantity' => 15,
+            'item_lot_number' => 'LOT-2026-DEL1',
+        ]);
+
+        StockMovementItem::create([
+            'organization_id' => $apexOrg->id,
+            'stock_movement_id' => $smInbound->id,
+            'inventory_item_id' => $itemCable->id,
+            'quantity' => 10,
+            'item_lot_number' => 'LOT-2026-CAB1',
         ]);
 
         WorkflowLog::create([
@@ -296,7 +313,7 @@ class DatabaseSeeder extends Seeder
             'to_state' => 'oc_pending',
             'action' => 'Submit Stock Requisition to OC',
             'user_id' => $userClerk->id,
-            'notes' => 'Submitted item lot details to OC for verification.',
+            'notes' => 'Submitted multi-item lot details to OC for verification.',
         ]);
 
         // Seed Sample Workshop Management System API Outbound Request (Item Request Process)
@@ -312,6 +329,14 @@ class DatabaseSeeder extends Seeder
             'current_state' => 'oc_pending',
             'created_by' => null, // Created via API
             'notes' => 'Item Request received via API from Workshop Management System for Robot Assembly Station B.',
+        ]);
+
+        StockMovementItem::create([
+            'organization_id' => $apexOrg->id,
+            'stock_movement_id' => $smOutbound->id,
+            'inventory_item_id' => $itemCable->id,
+            'quantity' => 10,
+            'item_lot_number' => 'LOT-WMS-55',
         ]);
 
         // Seed Initial Notifications

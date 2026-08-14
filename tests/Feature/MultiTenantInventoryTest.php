@@ -116,8 +116,17 @@ class MultiTenantInventoryTest extends TestCase
             'warehouse_id' => $wh->id,
             'inventory_item_id' => $item->id,
             'quantity' => 10,
+            'item_lot_number' => 'LOT-TEST-10',
             'current_state' => 'draft',
             'created_by' => $apexAdmin->id,
+        ]);
+
+        \App\Models\StockMovementItem::create([
+            'organization_id' => $apexAdmin->organization_id,
+            'stock_movement_id' => $movement->id,
+            'inventory_item_id' => $item->id,
+            'quantity' => 10,
+            'item_lot_number' => 'LOT-TEST-10',
         ]);
 
         $service = app(WorkflowService::class);
