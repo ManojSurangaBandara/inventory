@@ -105,6 +105,9 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
 
         Route::get('/categories', [InventoryController::class, 'categories'])->name('categories');
         Route::post('/categories', [InventoryController::class, 'storeCategory'])->name('categories.store');
+        Route::put('/categories/{id}', [InventoryController::class, 'updateCategory'])->name('categories.update');
+        Route::delete('/categories/{id}', [InventoryController::class, 'destroyCategory'])->name('categories.destroy');
+        Route::get('/categories/{parentId}/children', [InventoryController::class, 'categoryChildren'])->name('categories.children');
 
         Route::get('/suppliers', [InventoryController::class, 'suppliers'])->name('suppliers');
         Route::post('/suppliers', [InventoryController::class, 'storeSupplier'])->name('suppliers.store');

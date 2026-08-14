@@ -53,12 +53,19 @@
                     <span>Tenant Dashboard</span>
                 </a>
 
-                <div class="px-3 pt-4 pb-1 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Inventory Operations</div>
+                <div class="px-3 pt-4 pb-1 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Master Data</div>
                 <a href="{{ route('inventory.items') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('inventory.items*') ? 'bg-indigo-600/20 text-indigo-400 font-semibold border border-indigo-500/30' : '' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                    <span>Inventory Stock Items</span>
+                    <span>Item Master Catalog</span>
                 </a>
 
+                <div class="grid grid-cols-3 gap-1 px-1 pt-1">
+                    <a href="{{ route('inventory.categories') }}" class="text-center py-1.5 rounded-lg text-[10px] font-medium text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800 {{ request()->routeIs('inventory.categories*') ? 'border-indigo-500/50 text-indigo-300' : '' }}">4-Tier Cats</a>
+                    <a href="{{ route('inventory.suppliers') }}" class="text-center py-1.5 rounded-lg text-[10px] font-medium text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800 {{ request()->routeIs('inventory.suppliers*') ? 'border-indigo-500/50 text-indigo-300' : '' }}">Suppliers</a>
+                    <a href="{{ route('inventory.warehouses') }}" class="text-center py-1.5 rounded-lg text-[10px] font-medium text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800 {{ request()->routeIs('inventory.warehouses*') ? 'border-indigo-500/50 text-indigo-300' : '' }}">Warehouses</a>
+                </div>
+
+                <div class="px-3 pt-4 pb-1 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Operations & Pipelines</div>
                 <a href="{{ route('stock.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('stock.*') ? 'bg-indigo-600/20 text-indigo-400 font-semibold border border-indigo-500/30' : '' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                     <span>Stock Requests & Issues</span>
@@ -68,13 +75,6 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                     <span>Purchase Orders</span>
                 </a>
-
-                <div class="px-3 pt-4 pb-1 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Masters</div>
-                <div class="grid grid-cols-3 gap-1 px-1">
-                    <a href="{{ route('inventory.categories') }}" class="text-center py-1.5 rounded-lg text-[11px] text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800">Categories</a>
-                    <a href="{{ route('inventory.suppliers') }}" class="text-center py-1.5 rounded-lg text-[11px] text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800">Suppliers</a>
-                    <a href="{{ route('inventory.warehouses') }}" class="text-center py-1.5 rounded-lg text-[11px] text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800">Warehouses</a>
-                </div>
 
                 @if(Auth::user()->is_org_admin || Auth::user()->is_super_admin)
                     <div class="px-3 pt-4 pb-1 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Org Administration</div>
