@@ -94,10 +94,10 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Inventory Management Routes
+    | Inventory Master Data Routes (Tenant Admin & Super Admin Only)
     |--------------------------------------------------------------------------
     */
-    Route::prefix('inventory')->as('inventory.')->group(function () {
+    Route::middleware(['orgadmin'])->prefix('inventory')->as('inventory.')->group(function () {
         Route::get('/items', [InventoryController::class, 'items'])->name('items');
         Route::post('/items', [InventoryController::class, 'storeItem'])->name('items.store');
         Route::put('/items/{id}', [InventoryController::class, 'updateItem'])->name('items.update');

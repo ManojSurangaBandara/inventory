@@ -95,4 +95,20 @@ class CategoryMasterTest extends TestCase
         $this->assertEquals($cat4->id, $item->category_4_id);
         $this->assertEquals('Machinery & Tools > Drilling Equipment > Pneumatic Drills > Cordless Heavy-Duty Drills', $item->category_trail);
     }
+
+    #[Test]
+    public function regular_organization_staff_cannot_access_master_data()
+    {
+        $clerk = User::where('email', 'clerk@apexlogistics.com')->first();
+        $oc = User::where('email', 'oc@apexlogistics.com')->first();
+
+        // Clerk tries to access Item Master Catalog -> 403 Forbidden
+        $this->actingAs($clerk)->get(route('inventory.items'))->assertStatus(403);
+        $this->actingAs($clerk)->get(route('inventory.categories'))->assertStatus(403);
+        $this->actingAs($clerk)->get(route('inventory.suppliers'))->assertStatus(403);
+        $this->actingAs($clerk)->get(route('inventory.warehouses'))->assertStatus(403);
+
+        // OC tries to access Category Master -> 403 Forbidden
+        $this->actingAs($oc)->get(route('inventory.categories'))->assertStatus(403);
+    }
 }
