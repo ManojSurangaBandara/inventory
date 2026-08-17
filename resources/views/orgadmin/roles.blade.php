@@ -4,10 +4,11 @@
 
 @section('content')
 <div class="space-y-6">
+    <!-- Header -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
             <h2 class="text-xl font-bold text-white">Custom Roles & Permissions</h2>
-            <p class="text-xs text-slate-400">Define tenant-specific roles and configure access rights across inventory modules.</p>
+            <p class="text-xs text-slate-400">Define tenant-specific roles and configure access rights across inventory modules and workflows.</p>
         </div>
         <button onclick="document.getElementById('addRoleModal').classList.remove('hidden')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -16,39 +17,40 @@
     </div>
 
     <!-- Roles Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse($roles as $role)
-            <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between space-y-4">
-                <div class="space-y-2">
+            <div class="role-card bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between space-y-4 transition hover:shadow-2xl hover:border-indigo-500/30">
+                <div class="space-y-3">
                     <div class="flex items-start justify-between">
                         <div>
-                            <h3 class="font-bold text-white text-base">{{ $role->name }}</h3>
-                            <span class="font-mono text-[10px] text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">slug: {{ $role->slug }}</span>
+                            <h3 class="font-bold text-white text-base role-name">{{ $role->name }}</h3>
+                            <span class="font-mono text-[10px] text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20 font-semibold inline-block mt-0.5">slug: {{ $role->slug }}</span>
                         </div>
-                        <span class="px-2.5 py-1 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-semibold">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-bold user-count-badge">
                             {{ $role->users->count() }} {{ Str::plural('User', $role->users->count()) }}
                         </span>
                     </div>
 
-                    <p class="text-xs text-slate-400 min-h-[36px]">{{ $role->description ?? 'No description provided for this role.' }}</p>
+                    <p class="text-xs text-slate-400 min-h-[36px] leading-relaxed">{{ $role->description ?? 'No description provided for this role.' }}</p>
 
-                    <div class="pt-2 border-t border-slate-800/80">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Granted Permissions ({{ $role->permissions->count() }})</span>
-                        <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                    <div class="pt-3 border-t border-slate-800/80">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Granted Permissions ({{ $role->permissions->count() }})</span>
+                        <div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
                             @forelse($role->permissions as $p)
-                                <span class="px-2 py-0.5 rounded text-[10px] bg-slate-950 text-slate-300 border border-slate-800">
+                                <span class="role-perm-chip px-2 py-0.5 rounded-lg text-[10px] bg-slate-950 text-slate-300 border border-slate-800 font-medium">
                                     {{ $p->name }}
                                 </span>
                             @empty
-                                <span class="text-rose-400 text-[10px]">No permissions assigned yet</span>
+                                <span class="text-rose-500 text-[10px] font-semibold bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">No permissions assigned yet</span>
                             @endforelse
                         </div>
                     </div>
                 </div>
 
                 <div class="pt-3 border-t border-slate-800/80 flex items-center justify-end">
-                    <button onclick="editRole({{ json_encode($role) }}, {{ json_encode($role->permissions->pluck('id')) }})" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition">
-                        Configure Permissions &rarr;
+                    <button onclick="editRole({{ json_encode($role) }}, {{ json_encode($role->permissions->pluck('id')) }})" class="role-config-btn w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1.5">
+                        <span>Configure Permissions</span>
+                        <span>&rarr;</span>
                     </button>
                 </div>
             </div>
@@ -82,18 +84,21 @@
 
             <div>
                 <label class="block text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Assign Permissions by Module</label>
-                <div class="space-y-4">
+                <div class="space-y-3 max-h-72 overflow-y-auto pr-1">
                     @foreach($permissions as $module => $modulePerms)
-                        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3">
-                            <h4 class="text-xs font-bold text-white capitalize mb-2 border-b border-slate-800 pb-1 flex items-center justify-between">
-                                <span>{{ $module }} Module</span>
-                                <span class="text-[10px] text-slate-500 font-normal">{{ $modulePerms->count() }} permissions</span>
+                        <div class="perm-module-card bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-2">
+                            <h4 class="text-xs font-bold text-white capitalize border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                                <span class="flex items-center space-x-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                    <span>{{ $module }} Module</span>
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-normal">{{ $modulePerms->count() }} permissions</span>
                             </h4>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 @foreach($modulePerms as $perm)
-                                    <label class="flex items-center space-x-2 text-xs text-slate-300 hover:bg-slate-900 p-1.5 rounded cursor-pointer">
+                                    <label class="perm-checkbox-label flex items-center space-x-2.5 text-xs text-slate-300 hover:bg-slate-900 p-2 rounded-xl cursor-pointer border border-transparent transition">
                                         <input type="checkbox" name="permissions[]" value="{{ $perm->id }}" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
-                                        <span class="font-medium text-white">{{ $perm->name }}</span>
+                                        <span class="font-medium text-white perm-label-text">{{ $perm->name }}</span>
                                     </label>
                                 @endforeach
                             </div>
@@ -103,7 +108,7 @@
             </div>
 
             <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
-                <button type="button" onclick="document.getElementById('addRoleModal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700">Cancel</button>
+                <button type="button" onclick="document.getElementById('addRoleModal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700 font-semibold">Cancel</button>
                 <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Save Role</button>
             </div>
         </form>
@@ -134,15 +139,21 @@
 
             <div>
                 <label class="block text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Permissions</label>
-                <div class="space-y-4">
+                <div class="space-y-3 max-h-72 overflow-y-auto pr-1">
                     @foreach($permissions as $module => $modulePerms)
-                        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3">
-                            <h4 class="text-xs font-bold text-white capitalize mb-2 border-b border-slate-800 pb-1">{{ $module }} Module</h4>
+                        <div class="perm-module-card bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-2">
+                            <h4 class="text-xs font-bold text-white capitalize border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                                <span class="flex items-center space-x-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                    <span>{{ $module }} Module</span>
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-normal">{{ $modulePerms->count() }} permissions</span>
+                            </h4>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 @foreach($modulePerms as $perm)
-                                    <label class="flex items-center space-x-2 text-xs text-slate-300 hover:bg-slate-900 p-1.5 rounded cursor-pointer">
+                                    <label class="perm-checkbox-label flex items-center space-x-2.5 text-xs text-slate-300 hover:bg-slate-900 p-2 rounded-xl cursor-pointer border border-transparent transition">
                                         <input type="checkbox" name="permissions[]" value="{{ $perm->id }}" id="edit_perm_{{ $perm->id }}" class="edit-perm-checkbox rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
-                                        <span class="font-medium text-white">{{ $perm->name }}</span>
+                                        <span class="font-medium text-white perm-label-text">{{ $perm->name }}</span>
                                     </label>
                                 @endforeach
                             </div>
@@ -152,7 +163,7 @@
             </div>
 
             <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
-                <button type="button" onclick="document.getElementById('editRoleModal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700">Cancel</button>
+                <button type="button" onclick="document.getElementById('editRoleModal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700 font-semibold">Cancel</button>
                 <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Update Role</button>
             </div>
         </form>

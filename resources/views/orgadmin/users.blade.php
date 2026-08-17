@@ -70,7 +70,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-4 text-right">
-                                <button onclick="editUser({{ json_encode($u) }}, {{ json_encode($u->roles->pluck('id')) }})" class="px-3 py-1.5 rounded-xl border border-slate-700 text-[11px] text-slate-300 hover:bg-slate-800 transition">
+                                <button onclick="editUser({{ json_encode($u) }}, {{ json_encode($u->roles->pluck('id')) }})" class="px-3.5 py-1.5 rounded-xl border border-slate-700 text-[11px] font-semibold text-slate-300 hover:bg-slate-800 transition shadow-sm">
                                     Edit Roles & Access
                                 </button>
                             </td>
