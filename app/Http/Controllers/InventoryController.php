@@ -225,6 +225,22 @@ class InventoryController extends Controller
         return redirect()->route('inventory.suppliers')->with('success', "Supplier added.");
     }
 
+    public function destroySupplier(int $id)
+    {
+        $supplier = Supplier::findOrFail($id);
+
+        $purchaseOrdersCount = $supplier->purchaseOrders()->count();
+
+        if ($purchaseOrdersCount > 0) {
+            return redirect()->route('inventory.suppliers')->with('error', "Cannot delete supplier '{$supplier->name}': it is linked to {$purchaseOrdersCount} purchase order(s). Historical transaction records must be preserved.");
+        }
+
+        $name = $supplier->name;
+        $supplier->delete();
+
+        return redirect()->route('inventory.suppliers')->with('success', "Supplier '{$name}' deleted successfully.");
+    }
+
     /**
      * Warehouses Master
      */
