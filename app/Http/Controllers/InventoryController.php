@@ -230,7 +230,11 @@ class InventoryController extends Controller
      */
     public function warehouses()
     {
-        $warehouses = Warehouse::all();
+        $warehouses = Warehouse::withCount([
+            'stockMovements',
+            'purchaseOrders',
+        ])->get();
+
         return view('inventory.warehouses', compact('warehouses'));
     }
 
@@ -250,5 +254,33 @@ class InventoryController extends Controller
         ]);
 
         return redirect()->route('inventory.warehouses')->with('success', "Warehouse added.");
+    }
+
+    public function destroyWarehouse(int $id)
+    {
+        $warehouse = Warehouse::findOrFail($id);
+
+        $originMovementsCount = $warehouse->stockMovements()->count();
+        $targetMovementsCount = \App\Models\StockMovement::where('target_warehouse_id', $warehouse->id)->count();
+        $stockMovementsCount = $originMovementsCount + $targetMovementsCount;
+        $purchaseOrdersCount = $warehouse->purchaseOrders()->count();
+
+        if ($stockMovementsCount > 0 || $purchaseOrdersCount > 0) {
+            $reasons = [];
+            if ($stockMovementsCount > 0) {
+                $reasons[] = "{$stockMovementsCount} stock movement(s)";
+            }
+            if ($purchaseOrdersCount > 0) {
+                $reasons[] = "{$purchaseOrdersCount} purchase order(s)";
+            }
+            $reasonText = implode(' and ', $reasons);
+
+            return redirect()->route('inventory.warehouses')->with('error', "Cannot delete warehouse '{$warehouse->name}': it is linked to {$reasonText}. Historical transaction records must be preserved.");
+        }
+
+        $name = $warehouse->name;
+        $warehouse->delete();
+
+        return redirect()->route('inventory.warehouses')->with('success', "Warehouse '{$name}' deleted successfully.");
     }
 }
