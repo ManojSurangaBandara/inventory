@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tenant Dashboard Overview')
+@section('title', 'Dashboard Overview')
 
 @section('content')
 <div class="space-y-6">
@@ -9,7 +9,7 @@
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
             <div>
                 <h2 class="text-xl font-bold text-white mb-1">Welcome back, {{ Auth::user()->name }}</h2>
-                <p class="text-xs text-slate-300">Tenant: <strong class="text-indigo-400">{{ Auth::user()->organization->name ?? 'Default Org' }}</strong> • Single DB Scoped Operations</p>
+                <p class="text-xs text-slate-300">Organization: <strong class="text-indigo-400">{{ Auth::user()->organization->name ?? 'Default Org' }}</strong> • Secure Scoped Operations</p>
             </div>
             <div class="flex items-center space-x-2">
                 <a href="{{ route('inventory.items') }}" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition">

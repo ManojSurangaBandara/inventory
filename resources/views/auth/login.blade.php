@@ -9,7 +9,7 @@
             </svg>
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-white">Inventory Management System</h1>
-        <p class="text-xs text-slate-400 mt-1">Multi-Tenant Inventory & Dynamic Workflow Engine</p>
+        <p class="text-xs text-slate-400 mt-1">Enterprise Inventory & Dynamic Workflow Engine</p>
     </div>
 
     @if ($errors->any())
@@ -53,7 +53,7 @@
             <button onclick="fillAuth('superadmin@system.com', 'password')" class="text-left px-3 py-2 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 text-xs transition flex items-center justify-between">
                 <div>
                     <span class="font-bold text-amber-400 block">Super Admin</span>
-                    <span class="text-slate-400 text-[10px]">Global Tenant Control</span>
+                    <span class="text-slate-400 text-[10px]">Global Platform Control</span>
                 </div>
                 <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">System</span>
             </button>
@@ -63,7 +63,7 @@
                     <span class="font-bold text-indigo-400 block">Org Admin: Apex Logistics</span>
                     <span class="text-slate-400 text-[10px]">Org Admin & Workflow Builder</span>
                 </div>
-                <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">Tenant A</span>
+                <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">Apex Logistics</span>
             </button>
 
             <button onclick="fillAuth('manager@apexlogistics.com', 'password')" class="text-left px-3 py-2 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 text-xs transition flex items-center justify-between">
@@ -71,7 +71,7 @@
                     <span class="font-bold text-emerald-400 block">Org User: Inventory Manager</span>
                     <span class="text-slate-400 text-[10px]">Custom Role & Permissions</span>
                 </div>
-                <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Tenant A</span>
+                <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Apex Logistics</span>
             </button>
         </div>
     </div>

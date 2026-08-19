@@ -6,8 +6,8 @@
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-xl font-bold text-white">Organizations & Tenant Admins</h2>
-            <p class="text-xs text-slate-400">Create new tenant organizations and assign Organization Admins.</p>
+            <h2 class="text-xl font-bold text-white">Organizations & Organization Admins</h2>
+            <p class="text-xs text-slate-400">Create new client organizations and assign Organization Admins.</p>
         </div>
         <button onclick="document.getElementById('addOrgModal').classList.remove('hidden')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -74,7 +74,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-slate-500">No tenant organizations found. Click create to get started.</td>
+                            <td colspan="6" class="px-4 py-8 text-center text-slate-500">No organizations found. Click create to get started.</td>
                         </tr>
                     @endempty
                 </tbody>
