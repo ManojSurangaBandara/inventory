@@ -622,7 +622,7 @@
                     <div class="px-3 pt-4 pb-1 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Master Data</div>
                     <a href="{{ route('inventory.items') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('inventory.items*') ? 'bg-indigo-600/20 text-indigo-400 font-semibold border border-indigo-500/30' : '' }}">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                        <span>Item Master Catalog</span>
+                        <span>Items</span>
                     </a>
 
                     <div class="grid grid-cols-3 gap-1 px-1 pt-1">
