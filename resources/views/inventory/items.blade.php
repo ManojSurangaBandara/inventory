@@ -83,7 +83,7 @@
                                 </div>
                             </td>
                             <td class="px-4 py-4">
-                                <div class="font-bold text-white">${{ number_format($item->unit_cost, 2) }}</div>
+                                <div class="font-bold text-white">Rs. {{ number_format($item->unit_cost, 2) }}</div>
                                 <div class="text-[10px] text-slate-400">per {{ $item->unit }}</div>
                             </td>
                             <td class="px-4 py-4 text-right">
@@ -190,7 +190,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Standard Unit Cost ($) *</label>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Standard Unit Cost (Rs.) *</label>
                     <input type="number" step="0.01" name="unit_cost" required placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono">
                 </div>
 
@@ -287,7 +287,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Standard Unit Cost ($) *</label>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Standard Unit Cost (Rs.) *</label>
                     <input type="number" step="0.01" name="unit_cost" id="edit_unit_cost" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono">
                 </div>
 

@@ -31,7 +31,7 @@
 
         <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-2">
             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Financial Value</span>
-            <div class="font-bold text-emerald-400 text-2xl">${{ number_format($order->total_amount, 2) }}</div>
+            <div class="font-bold text-emerald-400 text-2xl">Rs. {{ number_format($order->total_amount, 2) }}</div>
             <div class="text-xs text-slate-400">Created by {{ $order->creator->name ?? 'System' }}</div>
         </div>
     </div>
@@ -57,8 +57,8 @@
                             <td class="px-4 py-3 font-bold text-white">{{ $pi->item->name ?? 'N/A' }}</td>
                             <td class="px-4 py-3 font-mono text-indigo-400">{{ $pi->item->sku ?? 'N/A' }}</td>
                             <td class="px-4 py-3 font-bold text-white">{{ $pi->quantity }} {{ $pi->item->unit ?? 'pcs' }}</td>
-                            <td class="px-4 py-3 text-slate-300">${{ number_format($pi->unit_price, 2) }}</td>
-                            <td class="px-4 py-3 text-right font-bold text-emerald-400">${{ number_format($pi->subtotal, 2) }}</td>
+                            <td class="px-4 py-3 text-slate-300">Rs. {{ number_format($pi->unit_price, 2) }}</td>
+                            <td class="px-4 py-3 text-right font-bold text-emerald-400">Rs. {{ number_format($pi->subtotal, 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
