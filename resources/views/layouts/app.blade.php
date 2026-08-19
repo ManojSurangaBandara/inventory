@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name', 'Inventory Management System') }}</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -785,12 +786,14 @@
                 document.documentElement.setAttribute('data-theme', 'dark');
                 localStorage.setItem('theme', 'dark');
                 syncThemeUI('dark');
+                window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: 'dark' } }));
             } else {
                 document.documentElement.classList.add('light');
                 document.documentElement.classList.remove('dark');
                 document.documentElement.setAttribute('data-theme', 'light');
                 localStorage.setItem('theme', 'light');
                 syncThemeUI('light');
+                window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: 'light' } }));
             }
         }
 

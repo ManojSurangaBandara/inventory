@@ -50,6 +50,32 @@ class StockMovementController extends Controller
         return view('stock.index', compact('movements', 'items', 'warehouses', 'workflow', 'availableTransitionsMap', 'stateDetailsMap'));
     }
 
+    public function transfers()
+    {
+        $transfers = StockMovement::where('type', 'transfer')
+            ->with(['items.item', 'item', 'warehouse', 'targetWarehouse', 'creator'])
+            ->latest()
+            ->get();
+        $items = InventoryItem::all();
+        $warehouses = Warehouse::all();
+        $workflow = $this->workflowService->getActiveWorkflow('StockTransfer', Auth::user()->organization_id)
+            ?? $this->workflowService->getActiveWorkflow('StockMovement', Auth::user()->organization_id);
+
+        $availableTransitionsMap = [];
+        $stateDetailsMap = [];
+
+        if ($workflow) {
+            foreach ($workflow->states as $st) {
+                $stateDetailsMap[$st->code] = $st;
+            }
+            foreach ($transfers as $t) {
+                $availableTransitionsMap[$t->id] = $this->workflowService->getAvailableTransitions($t, Auth::user());
+            }
+        }
+
+        return view('stock.transfers', compact('transfers', 'items', 'warehouses', 'workflow', 'availableTransitionsMap', 'stateDetailsMap'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
