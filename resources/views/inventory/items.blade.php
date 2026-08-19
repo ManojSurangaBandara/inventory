@@ -12,7 +12,7 @@
         </div>
         <button onclick="document.getElementById('addItemModal').classList.remove('hidden')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            <span>Register Master Item</span>
+            <span>Add Item</span>
         </button>
     </div>
 
@@ -125,7 +125,7 @@
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
-                <h3 class="font-bold text-white text-base">Register Master Catalog Item</h3>
+                <h3 class="font-bold text-white text-base">Add New Item</h3>
                 <p class="text-[11px] text-slate-400">Fill in product details and configure Category 1 (Required) and Categories 2-4 (Optional).</p>
             </div>
             <button onclick="document.getElementById('addItemModal').classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>
@@ -212,7 +212,7 @@
 
             <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
                 <button type="button" onclick="document.getElementById('addItemModal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700">Cancel</button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Save to Master Catalog</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Save Item</button>
             </div>
         </form>
     </div>
@@ -223,7 +223,7 @@
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
-                <h3 class="font-bold text-white text-base">Edit Master Catalog Item</h3>
+                <h3 class="font-bold text-white text-base">Edit Item</h3>
             </div>
             <button onclick="document.getElementById('editItemModal').classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>
         </div>
@@ -311,7 +311,7 @@
 
             <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
                 <button type="button" onclick="document.getElementById('editItemModal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700">Cancel</button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Update Item Master</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Update Item</button>
             </div>
         </form>
     </div>
