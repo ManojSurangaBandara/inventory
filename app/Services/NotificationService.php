@@ -40,10 +40,10 @@ class NotificationService
             'is_read' => false,
         ]);
 
-        // Also notify direct Org Admins or Users with that role
+        // Also notify direct Users with that role
         $users = User::where('organization_id', $organizationId)->get();
         foreach ($users as $u) {
-            if ($u->hasRole($roleSlug) || $u->isOrgAdmin()) {
+            if ($u->hasRole($roleSlug)) {
                 Notification::create([
                     'organization_id' => $organizationId,
                     'user_id' => $u->id,

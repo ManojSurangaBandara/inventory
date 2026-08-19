@@ -64,10 +64,6 @@ class User extends Authenticatable
 
     public function hasRole(string $roleSlug): bool
     {
-        if ($this->is_super_admin || $this->is_org_admin) {
-            return true;
-        }
-
         return $this->roles->contains('slug', $roleSlug);
     }
 
