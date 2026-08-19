@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ config('app.name', 'Inventory ERP') }}</title>
+    <title>{{ config('app.name', 'Inventory Management System') }}</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -584,11 +584,11 @@
         <!-- Logo & Organization Header -->
         <div class="p-5 border-b border-slate-800 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 font-extrabold text-lg">
-                    IN
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 font-extrabold text-xs">
+                    IMS
                 </div>
                 <div>
-                    <h2 class="font-bold text-white text-sm leading-snug">Nexus ERP</h2>
+                    <h2 class="font-bold text-white text-sm leading-snug">Inventory Management System</h2>
                     @if (Auth::user()->is_super_admin)
                         <span class="text-[10px] bg-amber-500/20 text-amber-300 font-semibold px-2 py-0.5 rounded-full border border-amber-500/30">Super Admin Portal</span>
                     @elseif(Auth::user()->organization)
