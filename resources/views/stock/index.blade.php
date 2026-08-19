@@ -15,21 +15,7 @@
         </button>
     </div>
 
-    <!-- Active Workflow Banner Info -->
-    @if($workflow)
-        <div class="bg-indigo-950/30 border border-indigo-500/30 rounded-2xl p-4 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-xl bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 flex items-center justify-center font-bold text-xs">
-                    WF
-                </div>
-                <div>
-                    <h4 class="text-xs font-bold text-white">Active Workflow Engine: <span class="text-indigo-400">{{ $workflow->name }}</span></h4>
-                    <p class="text-[10px] text-slate-400">Configured Multi-level approval path (Subject Clerk / API &rarr; OC &rarr; QM &rarr; CO &rarr; Storemen).</p>
-                </div>
-            </div>
-            <a href="{{ route('workflows.builder', $workflow->id) }}" class="text-xs text-indigo-400 hover:underline font-semibold">Configure Approval Flow &rarr;</a>
-        </div>
-    @endif
+
 
     <!-- Stock Movements Table -->
     <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl">
