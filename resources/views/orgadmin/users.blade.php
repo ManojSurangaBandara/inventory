@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Organization Users Management')
+@section('title', 'Users Management')
 
 @section('content')
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-xl font-bold text-white">Organization Users</h2>
+            <h2 class="text-xl font-bold text-white">Users</h2>
             <p class="text-xs text-slate-400">Manage user accounts and assign custom organization roles for {{ Auth::user()->organization->name ?? 'your organization' }}.</p>
         </div>
         <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
