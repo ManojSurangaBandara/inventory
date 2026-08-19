@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Stock Requests & Issues')
+@section('title', 'Stock Requests')
 
 @section('content')
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-xl font-bold text-white">Stock Requests & Issue Pipeline</h2>
-            <p class="text-xs text-slate-400">Manage multi-item inbound stock additions and Workshop Management System item issue requisitions.</p>
+            <h2 class="text-xl font-bold text-white">Stock Requests</h2>
+            <p class="text-xs text-slate-400">Manage multi-item inbound stock additions and item issue requisitions.</p>
         </div>
         <button onclick="document.getElementById('addMovementModal').classList.remove('hidden')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>

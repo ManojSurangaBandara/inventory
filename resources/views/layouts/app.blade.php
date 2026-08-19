@@ -635,7 +635,7 @@
                 <div class="px-3 pt-4 pb-1 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Operations & Pipelines</div>
                 <a href="{{ route('stock.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('stock.*') ? 'bg-indigo-600/20 text-indigo-400 font-semibold border border-indigo-500/30' : '' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                    <span>Stock Requests & Issues</span>
+                    <span>Stock Requests</span>
                 </a>
 
                 <a href="{{ route('orders.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('orders.*') ? 'bg-indigo-600/20 text-indigo-400 font-semibold border border-indigo-500/30' : '' }}">
