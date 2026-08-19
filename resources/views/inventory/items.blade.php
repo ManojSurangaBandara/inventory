@@ -93,16 +93,23 @@
                                 <div class="text-[10px] text-slate-500">Min Threshold: {{ $item->reorder_level }}</div>
                             </td>
                             <td class="px-4 py-4 text-right space-x-2">
-                                <button onclick='editItem({{ json_encode($item) }})' class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-medium transition">
-                                    Edit
-                                </button>
-                                <form action="{{ route('inventory.items.destroy', $item->id) }}" method="POST" class="inline" onsubmit="return confirm('Delete master item \'{{ $item->name }}\'?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs font-medium transition">
-                                        Delete
+                                @if(!$item->isUsed())
+                                    <button onclick='editItem({{ json_encode($item) }})' class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-medium transition">
+                                        Edit
                                     </button>
-                                </form>
+                                    <form action="{{ route('inventory.items.destroy', $item->id) }}" method="POST" class="inline" onsubmit="return confirm('Delete item \'{{ $item->name }}\'?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs font-medium transition">
+                                            Delete
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-800/40 text-slate-500 text-[10px] font-medium" title="Item is actively in use or has transaction history and cannot be edited or deleted">
+                                        <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                        <span>In Use</span>
+                                    </span>
+                                @endif
                             </td>
                         </tr>
                     @empty

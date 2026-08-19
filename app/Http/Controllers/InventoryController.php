@@ -84,6 +84,10 @@ class InventoryController extends Controller
     {
         $item = InventoryItem::findOrFail($id);
 
+        if ($item->isUsed()) {
+            return redirect()->route('inventory.items')->with('error', "Item '{$item->name}' cannot be edited because it is in use or has transaction history.");
+        }
+
         $request->validate([
             'sku' => 'required|string|max:100',
             'name' => 'required|string|max:255',
@@ -110,16 +114,21 @@ class InventoryController extends Controller
             'description' => $request->description,
         ]);
 
-        return redirect()->route('inventory.items')->with('success', "Master Item '{$item->name}' updated.");
+        return redirect()->route('inventory.items')->with('success', "Item '{$item->name}' updated.");
     }
 
     public function destroyItem(int $id)
     {
         $item = InventoryItem::findOrFail($id);
+
+        if ($item->isUsed()) {
+            return redirect()->route('inventory.items')->with('error', "Item '{$item->name}' cannot be deleted because it is in use or has transaction history.");
+        }
+
         $name = $item->name;
         $item->delete();
 
-        return redirect()->route('inventory.items')->with('success', "Item '{$name}' deleted from master catalog.");
+        return redirect()->route('inventory.items')->with('success', "Item '{$name}' deleted from catalog.");
     }
 
     /**

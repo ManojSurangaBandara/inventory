@@ -58,6 +58,40 @@ class InventoryItem extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function stockMovementItems(): HasMany
+    {
+        return $this->hasMany(StockMovementItem::class);
+    }
+
+    public function purchaseOrderItems(): HasMany
+    {
+        return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    /**
+     * Check if this item has been used anywhere in stock or transactions.
+     */
+    public function isUsed(): bool
+    {
+        if ($this->current_stock > 0) {
+            return true;
+        }
+
+        if ($this->stockMovements()->exists()) {
+            return true;
+        }
+
+        if ($this->stockMovementItems()->exists()) {
+            return true;
+        }
+
+        if ($this->purchaseOrderItems()->exists()) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function isLowStock(): bool
     {
         return $this->current_stock <= $this->reorder_level;
