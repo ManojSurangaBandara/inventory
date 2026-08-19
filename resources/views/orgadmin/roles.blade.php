@@ -8,7 +8,7 @@
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
             <h2 class="text-xl font-bold text-white">Custom Roles & Permissions</h2>
-            <p class="text-xs text-slate-400">Define tenant-specific roles and configure access rights across inventory modules and workflows.</p>
+            <p class="text-xs text-slate-400">Define organization-specific roles and configure access rights across inventory modules and workflows.</p>
         </div>
         <button onclick="document.getElementById('addRoleModal').classList.remove('hidden')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -66,7 +66,7 @@
 <div id="addRoleModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 class="font-bold text-white text-base">Create Custom Tenant Role</h3>
+            <h3 class="font-bold text-white text-base">Create Custom Role</h3>
             <button onclick="document.getElementById('addRoleModal').classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>
         </div>
 

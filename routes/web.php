@@ -125,6 +125,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
     */
     Route::prefix('stock')->as('stock.')->group(function () {
         Route::get('/', [StockMovementController::class, 'index'])->name('index');
+        Route::get('/transfers', [StockMovementController::class, 'transfers'])->name('transfers');
         Route::post('/', [StockMovementController::class, 'store'])->name('store');
         Route::get('/{id}', [StockMovementController::class, 'show'])->name('show');
         Route::post('/{id}/transition', [StockMovementController::class, 'transition'])->name('transition');

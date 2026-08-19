@@ -43,10 +43,6 @@ class WorkflowTransition extends Model
 
     public function isUserAllowed(User $user): bool
     {
-        if ($user->is_super_admin || $user->is_org_admin) {
-            return true;
-        }
-
         if (empty($this->allowed_roles)) {
             return true; // if no specific role specified, any org user can trigger
         }

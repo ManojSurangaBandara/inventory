@@ -40,7 +40,7 @@
                             </td>
                             <td class="px-4 py-4 font-bold text-white">{{ $po->supplier->name ?? 'N/A' }}</td>
                             <td class="px-4 py-4 text-slate-300">{{ $po->warehouse->name ?? 'N/A' }}</td>
-                            <td class="px-4 py-4 font-bold text-emerald-400 text-sm">${{ number_format($po->total_amount, 2) }}</td>
+                            <td class="px-4 py-4 font-bold text-emerald-400 text-sm">Rs. {{ number_format($po->total_amount, 2) }}</td>
                             <td class="px-4 py-4">
                                 <span class="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">
                                     {{ $po->current_state }}
@@ -126,7 +126,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] text-slate-400 mb-1">Unit Price ($)</label>
+                        <label class="block text-[10px] text-slate-400 mb-1">Unit Price (Rs.)</label>
                         <input type="number" step="0.01" name="items[0][unit_price]" required value="150.00" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
                     </div>
                 </div>

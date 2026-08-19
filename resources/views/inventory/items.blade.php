@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Item Master Catalog')
+@section('title', 'Items')
 
 @section('content')
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-xl font-bold text-white">Item Master Catalog</h2>
-            <p class="text-xs text-slate-400">Manage master product items with 4-level category classifications (Category 1 required, Categories 2-4 optional).</p>
+            <h2 class="text-xl font-bold text-white">Items</h2>
+            <p class="text-xs text-slate-400">Manage product items with 4-level category classifications (Category 1 required, Categories 2-4 optional).</p>
         </div>
         <button onclick="document.getElementById('addItemModal').classList.remove('hidden')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            <span>Register Master Item</span>
+            <span>Add Item</span>
         </button>
     </div>
 
@@ -83,7 +83,7 @@
                                 </div>
                             </td>
                             <td class="px-4 py-4">
-                                <div class="font-bold text-white">${{ number_format($item->unit_cost, 2) }}</div>
+                                <div class="font-bold text-white">Rs. {{ number_format($item->unit_cost, 2) }}</div>
                                 <div class="text-[10px] text-slate-400">per {{ $item->unit }}</div>
                             </td>
                             <td class="px-4 py-4 text-right">
@@ -93,16 +93,23 @@
                                 <div class="text-[10px] text-slate-500">Min Threshold: {{ $item->reorder_level }}</div>
                             </td>
                             <td class="px-4 py-4 text-right space-x-2">
-                                <button onclick='editItem({{ json_encode($item) }})' class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-medium transition">
-                                    Edit
-                                </button>
-                                <form action="{{ route('inventory.items.destroy', $item->id) }}" method="POST" class="inline" onsubmit="return confirm('Delete master item \'{{ $item->name }}\'?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs font-medium transition">
-                                        Delete
+                                @if(!$item->isUsed())
+                                    <button onclick='editItem({{ json_encode($item) }})' class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-medium transition">
+                                        Edit
                                     </button>
-                                </form>
+                                    <form action="{{ route('inventory.items.destroy', $item->id) }}" method="POST" class="inline" onsubmit="return confirm('Delete item \'{{ $item->name }}\'?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs font-medium transition">
+                                            Delete
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-800/40 text-slate-500 text-[10px] font-medium" title="Item is actively in use or has transaction history and cannot be edited or deleted">
+                                        <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                        <span>In Use</span>
+                                    </span>
+                                @endif
                             </td>
                         </tr>
                     @empty
@@ -125,7 +132,7 @@
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
-                <h3 class="font-bold text-white text-base">Register Master Catalog Item</h3>
+                <h3 class="font-bold text-white text-base">Add New Item</h3>
                 <p class="text-[11px] text-slate-400">Fill in product details and configure Category 1 (Required) and Categories 2-4 (Optional).</p>
             </div>
             <button onclick="document.getElementById('addItemModal').classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>
@@ -190,7 +197,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Standard Unit Cost ($) *</label>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Standard Unit Cost (Rs.) *</label>
                     <input type="number" step="0.01" name="unit_cost" required placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono">
                 </div>
 
@@ -212,7 +219,7 @@
 
             <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
                 <button type="button" onclick="document.getElementById('addItemModal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700">Cancel</button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Save to Master Catalog</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Save Item</button>
             </div>
         </form>
     </div>
@@ -223,7 +230,7 @@
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
-                <h3 class="font-bold text-white text-base">Edit Master Catalog Item</h3>
+                <h3 class="font-bold text-white text-base">Edit Item</h3>
             </div>
             <button onclick="document.getElementById('editItemModal').classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>
         </div>
@@ -287,7 +294,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Standard Unit Cost ($) *</label>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Standard Unit Cost (Rs.) *</label>
                     <input type="number" step="0.01" name="unit_cost" id="edit_unit_cost" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono">
                 </div>
 
@@ -311,7 +318,7 @@
 
             <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
                 <button type="button" onclick="document.getElementById('editItemModal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700">Cancel</button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Update Item Master</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Update Item</button>
             </div>
         </form>
     </div>

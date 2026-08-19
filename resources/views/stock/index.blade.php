@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Stock Requests & Issues')
+@section('title', 'Stock Requests')
 
 @section('content')
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-xl font-bold text-white">Stock Requests & Issue Pipeline</h2>
-            <p class="text-xs text-slate-400">Manage multi-item inbound stock additions and Workshop Management System item issue requisitions.</p>
+            <h2 class="text-xl font-bold text-white">Stock Requests</h2>
+            <p class="text-xs text-slate-400">Manage multi-item inbound stock additions and item issue requisitions.</p>
         </div>
         <button onclick="document.getElementById('addMovementModal').classList.remove('hidden')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -15,21 +15,7 @@
         </button>
     </div>
 
-    <!-- Active Workflow Banner Info -->
-    @if($workflow)
-        <div class="bg-indigo-950/30 border border-indigo-500/30 rounded-2xl p-4 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-xl bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 flex items-center justify-center font-bold text-xs">
-                    WF
-                </div>
-                <div>
-                    <h4 class="text-xs font-bold text-white">Active Workflow Engine: <span class="text-indigo-400">{{ $workflow->name }}</span></h4>
-                    <p class="text-[10px] text-slate-400">Configured Multi-level approval path (Subject Clerk / API &rarr; OC &rarr; QM &rarr; CO &rarr; Storemen).</p>
-                </div>
-            </div>
-            <a href="{{ route('workflows.builder', $workflow->id) }}" class="text-xs text-indigo-400 hover:underline font-semibold">Configure Approval Flow &rarr;</a>
-        </div>
-    @endif
+
 
     <!-- Stock Movements Table -->
     <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl">

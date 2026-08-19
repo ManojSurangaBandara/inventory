@@ -8,7 +8,7 @@
     <div class="bg-gradient-to-r from-amber-900/30 via-slate-900 to-indigo-950/40 border border-amber-500/20 rounded-3xl p-6 relative overflow-hidden">
         <div class="relative z-10">
             <h2 class="text-xl font-bold text-white mb-1">Global System Control Panel</h2>
-            <p class="text-xs text-slate-300 max-w-xl">Super Admin overview. You are operating outside tenant isolation scope to manage platform organizations and set up tenant administrators.</p>
+            <p class="text-xs text-slate-300 max-w-xl">Super Admin overview. You are operating across all organizations to manage platform accounts and administrators.</p>
         </div>
     </div>
 
@@ -22,7 +22,7 @@
                 </span>
             </div>
             <p class="text-2xl font-bold text-white">{{ $stats['total_organizations'] }}</p>
-            <span class="text-[11px] text-emerald-400 font-medium">{{ $stats['active_organizations'] }} active tenant accounts</span>
+            <span class="text-[11px] text-emerald-400 font-medium">{{ $stats['active_organizations'] }} active accounts</span>
         </div>
 
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-sm">
@@ -55,7 +55,7 @@
                 </span>
             </div>
             <p class="text-2xl font-bold text-white">Single DB</p>
-            <span class="text-[11px] text-amber-400 font-medium">Tenant Scoped Isolation</span>
+            <span class="text-[11px] text-amber-400 font-medium">Organization Scoped Isolation</span>
         </div>
     </div>
 
@@ -64,7 +64,7 @@
         <div class="flex items-center justify-between mb-5">
             <div>
                 <h3 class="font-bold text-white text-sm">Recent Organizations</h3>
-                <p class="text-xs text-slate-400">Platform tenant registration list</p>
+                <p class="text-xs text-slate-400">Platform organization registration list</p>
             </div>
             <a href="{{ route('superadmin.organizations') }}" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-medium transition">
                 Manage All Organizations &rarr;

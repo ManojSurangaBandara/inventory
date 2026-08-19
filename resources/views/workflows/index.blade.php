@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dynamic UI Workflow Engine')
+@section('title', 'Workflow Builder')
 
 @section('content')
 <div class="space-y-6">
