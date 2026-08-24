@@ -96,8 +96,10 @@
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Target Module / Entity *</label>
                 <select name="entity_type" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
                     <option value="StockMovement">Stock Movement Lifecycle</option>
+                    {{-- Temporarily hidden:
                     <option value="PurchaseOrder">Purchase Order Lifecycle</option>
                     <option value="InventoryItem">Inventory Item Lifecycle</option>
+                    --}}
                 </select>
             </div>
 
