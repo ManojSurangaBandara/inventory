@@ -715,7 +715,7 @@
                     <span class="text-[11px] font-semibold text-slate-600 theme-toggle-label hidden sm:inline">Light</span>
                 </button>
 
-                <!-- Notifications Bell Icon -->
+                {{-- Temporarily hidden: Notifications Bell Icon
                 @if(Auth::user()->organization_id)
                     @php
                         $unreadCount = \App\Models\Notification::where('organization_id', Auth::user()->organization_id)
@@ -736,6 +736,7 @@
                         @endif
                     </a>
                 @endif
+                --}}
 
                 @if(Auth::user()->is_super_admin)
                     <span class="px-2.5 py-1 text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/30 rounded-lg flex items-center space-x-1">
