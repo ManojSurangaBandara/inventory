@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\Warehouse;
 use App\Models\WorkflowDefinition;
 use App\Models\WorkflowState;
 use App\Models\WorkflowTransition;
@@ -15,10 +16,12 @@ class WorkflowController extends Controller
     public function index()
     {
         $workflows = WorkflowDefinition::where('organization_id', Auth::user()->organization_id)
+            ->with(['warehouse'])
             ->withCount(['states', 'transitions'])
             ->get();
+        $warehouses = Warehouse::where('organization_id', Auth::user()->organization_id)->orderBy('name')->get();
 
-        return view('workflows.index', compact('workflows'));
+        return view('workflows.index', compact('workflows', 'warehouses'));
     }
 
     public function storeDefinition(Request $request)
@@ -26,6 +29,7 @@ class WorkflowController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'entity_type' => 'required|string|in:StockMovement,StockDispatch,StockReceipt,StockTransfer,StockAdjustment,PurchaseOrder,InventoryItem',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
             'description' => 'nullable|string',
         ]);
 
@@ -33,11 +37,31 @@ class WorkflowController extends Controller
             'organization_id' => Auth::user()->organization_id,
             'name' => $request->name,
             'entity_type' => $request->entity_type,
+            'warehouse_id' => $request->warehouse_id ?: null,
             'description' => $request->description,
             'is_active' => true,
         ]);
 
         return redirect()->route('workflows.builder', $workflow->id)->with('success', "Workflow '{$workflow->name}' created. Add custom state steps to configure the pipeline.");
+    }
+
+    public function updateDefinition(Request $request, int $id)
+    {
+        $workflow = WorkflowDefinition::where('organization_id', Auth::user()->organization_id)->findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
+            'description' => 'nullable|string',
+        ]);
+
+        $workflow->update([
+            'name' => $request->name,
+            'warehouse_id' => $request->warehouse_id ?: null,
+            'description' => $request->description,
+        ]);
+
+        return redirect()->back()->with('success', "Workflow '{$workflow->name}' updated successfully.");
     }
 
     public function toggleActive(int $id)
@@ -63,6 +87,7 @@ class WorkflowController extends Controller
     {
         $workflow = WorkflowDefinition::where('organization_id', Auth::user()->organization_id)
             ->with([
+                'warehouse',
                 'states' => function ($q) {
                     $q->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
                 },
@@ -73,8 +98,9 @@ class WorkflowController extends Controller
             ->findOrFail($id);
 
         $roles = Role::where('organization_id', Auth::user()->organization_id)->get();
+        $warehouses = Warehouse::where('organization_id', Auth::user()->organization_id)->orderBy('name')->get();
 
-        return view('workflows.builder', compact('workflow', 'roles'));
+        return view('workflows.builder', compact('workflow', 'roles', 'warehouses'));
     }
 
     public function storeState(Request $request, int $workflowId)
@@ -84,6 +110,7 @@ class WorkflowController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'color' => 'required|string',
+            'location' => 'nullable|string|max:255',
             'is_initial' => 'nullable|boolean',
             'is_final' => 'nullable|boolean',
         ]);
@@ -103,6 +130,7 @@ class WorkflowController extends Controller
             'code' => $code,
             'name' => $request->name,
             'color' => $request->color,
+            'location' => $request->location,
             'is_initial' => $request->boolean('is_initial'),
             'is_final' => $request->boolean('is_final'),
             'sort_order' => $maxSort + 1,
@@ -119,6 +147,7 @@ class WorkflowController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'color' => 'required|string',
+            'location' => 'nullable|string|max:255',
             'is_initial' => 'nullable|boolean',
             'is_final' => 'nullable|boolean',
         ]);
@@ -136,6 +165,7 @@ class WorkflowController extends Controller
             'code' => $code,
             'name' => $request->name,
             'color' => $request->color,
+            'location' => $request->location,
             'is_initial' => $request->boolean('is_initial'),
             'is_final' => $request->boolean('is_final'),
         ]);

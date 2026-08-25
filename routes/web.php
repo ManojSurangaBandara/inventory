@@ -82,6 +82,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
     Route::middleware(['orgadmin'])->prefix('workflows')->as('workflows.')->group(function () {
         Route::get('/', [WorkflowController::class, 'index'])->name('index');
         Route::post('/definitions', [WorkflowController::class, 'storeDefinition'])->name('store');
+        Route::put('/definitions/{id}', [WorkflowController::class, 'updateDefinition'])->name('update');
         Route::post('/{id}/toggle-active', [WorkflowController::class, 'toggleActive'])->name('toggle-active');
         Route::delete('/{id}', [WorkflowController::class, 'destroyDefinition'])->name('destroy');
         Route::get('/{id}/builder', [WorkflowController::class, 'builder'])->name('builder');
@@ -125,6 +126,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('stock')->as('stock.')->group(function () {
+        Route::get('/balance', [StockMovementController::class, 'stockBalance'])->name('balance');
         Route::get('/', [StockMovementController::class, 'index'])->name('index');
         Route::get('/transfers', [StockMovementController::class, 'transfers'])->name('transfers');
         Route::post('/', [StockMovementController::class, 'store'])->name('store');

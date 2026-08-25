@@ -23,10 +23,27 @@ class WorkflowService
     }
 
     /**
-     * Get active workflow definition for entity type.
+     * Get active workflow definition for entity type, with optional warehouse/location matching.
      */
-    public function getActiveWorkflow(string $entityType, ?int $organizationId = null): ?WorkflowDefinition
+    public function getActiveWorkflow(string $entityType, ?int $organizationId = null, ?int $warehouseId = null): ?WorkflowDefinition
     {
+        // 1. If warehouseId is provided, try to find a warehouse-specific workflow first
+        if ($warehouseId) {
+            $specificQuery = WorkflowDefinition::where('entity_type', $entityType)
+                ->where('warehouse_id', $warehouseId)
+                ->where('is_active', true);
+
+            if ($organizationId) {
+                $specificQuery->where('organization_id', $organizationId);
+            }
+
+            $specificWorkflow = $specificQuery->with(['states', 'transitions.fromState', 'transitions.toState'])->first();
+            if ($specificWorkflow) {
+                return $specificWorkflow;
+            }
+        }
+
+        // 2. Fallback to global / general workflow (where warehouse_id is null or any active)
         $query = WorkflowDefinition::where('entity_type', $entityType)->where('is_active', true);
         if ($organizationId) {
             $query->where('organization_id', $organizationId);
@@ -35,10 +52,10 @@ class WorkflowService
     }
 
     /**
-     * Get active workflow specifically for a stock movement lifecycle type.
+     * Get active workflow specifically for a stock movement lifecycle type and optional warehouse location.
      * Checks specialized workflow first, falling back to general StockMovement workflow.
      */
-    public function getActiveWorkflowForType(string $movementType, ?int $organizationId = null): ?WorkflowDefinition
+    public function getActiveWorkflowForType(string $movementType, ?int $organizationId = null, ?int $warehouseId = null): ?WorkflowDefinition
     {
         $typeMapping = [
             'outbound' => 'StockDispatch',
@@ -49,15 +66,15 @@ class WorkflowService
 
         $targetEntity = $typeMapping[$movementType] ?? 'StockMovement';
 
-        // 1. Try specialized entity type workflow
-        $workflow = $this->getActiveWorkflow($targetEntity, $organizationId);
+        // 1. Try specialized entity type workflow (with warehouse location priority)
+        $workflow = $this->getActiveWorkflow($targetEntity, $organizationId, $warehouseId);
         if ($workflow) {
             return $workflow;
         }
 
         // 2. Fallback to general StockMovement workflow
         if ($targetEntity !== 'StockMovement') {
-            return $this->getActiveWorkflow('StockMovement', $organizationId);
+            return $this->getActiveWorkflow('StockMovement', $organizationId, $warehouseId);
         }
 
         return null;
@@ -77,11 +94,12 @@ class WorkflowService
                 }
             }
 
-            return $this->getActiveWorkflowForType($entity->type ?? 'inbound', $entity->organization_id);
+            return $this->getActiveWorkflowForType($entity->type ?? 'inbound', $entity->organization_id, $entity->warehouse_id);
         }
 
         $entityType = class_basename($entity);
-        return $this->getActiveWorkflow($entityType, $entity->organization_id);
+        $warehouseId = $entity->warehouse_id ?? null;
+        return $this->getActiveWorkflow($entityType, $entity->organization_id, $warehouseId);
     }
 
     /**

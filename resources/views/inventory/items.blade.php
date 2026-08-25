@@ -52,7 +52,6 @@
                         <th class="px-4 py-3.5">SKU & Item Name</th>
                         <th class="px-4 py-3.5">Categories (1 - 4)</th>
                         <th class="px-4 py-3.5">Unit & Cost</th>
-                        <th class="px-4 py-3.5 text-right">On-Hand Stock</th>
                         <th class="px-4 py-3.5 text-right">Actions</th>
                     </tr>
                 </thead>
@@ -86,12 +85,6 @@
                                 <div class="font-bold text-white">Rs. {{ number_format($item->unit_cost, 2) }}</div>
                                 <div class="text-[10px] text-slate-400">per {{ $item->unit }}</div>
                             </td>
-                            <td class="px-4 py-4 text-right">
-                                <div class="font-bold text-sm {{ $item->isLowStock() ? 'text-rose-400' : 'text-emerald-400' }}">
-                                    {{ $item->current_stock }} {{ $item->unit }}
-                                </div>
-                                <div class="text-[10px] text-slate-500">Min Threshold: {{ $item->reorder_level }}</div>
-                            </td>
                             <td class="px-4 py-4 text-right space-x-2">
                                 @if(!$item->isUsed())
                                     <button onclick='editItem({{ json_encode($item) }})' class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-medium transition">
@@ -114,7 +107,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-slate-500">No master items registered in catalog.</td>
+                            <td colspan="4" class="px-4 py-8 text-center text-slate-500">No master items registered in catalog.</td>
                         </tr>
                     @endempty
                 </tbody>

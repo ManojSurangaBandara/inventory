@@ -18,6 +18,7 @@ class WorkflowState extends Model
         'code',
         'name',
         'color',
+        'location',
         'is_initial',
         'is_final',
         'sort_order',

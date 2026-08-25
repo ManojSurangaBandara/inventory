@@ -7,9 +7,9 @@
 
 <div class="space-y-6">
     <!-- Header Controls -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl">
-        <div class="space-y-1">
-            <div class="flex items-center space-x-2">
+    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl">
+        <div class="space-y-1.5">
+            <div class="flex items-center space-x-2 flex-wrap">
                 <a href="{{ route('workflows.index') }}" class="text-xs text-indigo-400 hover:underline font-semibold">&larr; Back to Workflows</a>
                 <span class="text-slate-400">•</span>
                 @php
@@ -24,12 +24,31 @@
                     ][$workflow->entity_type] ?? ($workflow->entity_type . ' Module');
                 @endphp
                 <span class="text-xs font-bold uppercase text-slate-400 tracking-wider">{{ $friendlyEntity }}</span>
+
+                <span class="text-slate-400">•</span>
+                @if($workflow->warehouse)
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold gap-1">
+                        <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span>Facility: {{ $workflow->warehouse->name }} ({{ $workflow->warehouse->code }})</span>
+                    </span>
+                @else
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 border border-slate-700 font-semibold gap-1">
+                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>All Locations (Global)</span>
+                    </span>
+                @endif
             </div>
-            <h2 class="text-xl font-bold text-white">{{ $workflow->name }}</h2>
-            <p class="text-xs text-slate-400">{{ $workflow->description ?? 'Configure states and action rules visually.' }}</p>
+
+            <div class="flex items-center space-x-3">
+                <h2 class="text-xl font-bold text-white">{{ $workflow->name }}</h2>
+                <button onclick="document.getElementById('editWorkflowModal').classList.remove('hidden')" class="text-slate-400 hover:text-indigo-400 p-1" title="Edit Workflow Title & Location Settings">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400">{{ $workflow->description ?? 'Configure states, stage locations, and transition rules visually.' }}</p>
         </div>
 
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-3 flex-wrap gap-y-2">
             <button onclick="document.getElementById('addStateModal').classList.remove('hidden')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl text-xs border border-slate-700 transition flex items-center space-x-1.5 shadow-sm">
                 <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                 <span>+ Add State Step</span>
@@ -153,6 +172,14 @@
                             <span>code:</span>
                             <span class="state-code-pill bg-black/30 px-1.5 py-0.5 rounded font-bold">{{ $state->code }}</span>
                         </div>
+
+                        <!-- Stage Physical Location Badge -->
+                        @if($state->location)
+                            <div class="flex items-center space-x-1 text-[11px] text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-lg font-medium">
+                                <svg class="w-3 h-3 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span class="truncate">Stage Location: <strong>{{ $state->location }}</strong></span>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Outgoing Transitions Section -->
@@ -218,7 +245,13 @@
             @csrf
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">State Step Name *</label>
-                <input type="text" name="name" required placeholder="e.g. Awaiting Quality Inspection" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <input type="text" name="name" required placeholder="e.g. Quality Inspection & Verification" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Stage Location / Physical Zone</label>
+                <input type="text" name="location" placeholder="e.g. Receiving Bay 1, QC Testing Lab, Main Rack A" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <p class="text-[10px] text-slate-400 mt-1">Physical station or depot area where this stage occurs.</p>
             </div>
 
             <div>
@@ -271,6 +304,12 @@
             </div>
 
             <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Stage Location / Physical Zone</label>
+                <input type="text" name="location" id="edit_state_location" placeholder="e.g. Receiving Bay 1, QC Testing Lab, Main Rack A" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <p class="text-[10px] text-slate-400 mt-1">Physical station or depot area where this stage occurs.</p>
+            </div>
+
+            <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Badge Color Theme *</label>
                 <select name="color" id="edit_state_color" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
                     <option value="slate">Slate Gray</option>
@@ -298,6 +337,46 @@
             <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
                 <button type="button" onclick="document.getElementById('editStateModal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700">Cancel</button>
                 <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Update State Step</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Edit Workflow Header Settings -->
+<div id="editWorkflowModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="font-bold text-white text-base">Edit Workflow Settings</h3>
+            <button onclick="document.getElementById('editWorkflowModal').classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>
+        </div>
+
+        <form action="{{ route('workflows.update', $workflow->id) }}" method="POST" class="space-y-4">
+            @csrf
+            @method('PUT')
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Workflow Title *</label>
+                <input type="text" name="name" value="{{ $workflow->name }}" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Facility / Warehouse Location (Scope)</label>
+                <select name="warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                    <option value="">-- All Locations (Global Scope) --</option>
+                    @foreach($warehouses as $wh)
+                        <option value="{{ $wh->id }}" {{ $workflow->warehouse_id == $wh->id ? 'selected' : '' }}>{{ $wh->name }} ({{ $wh->code }}) @if($wh->location) - {{ $wh->location }} @endif</option>
+                    @endforeach
+                </select>
+                <p class="text-[10px] text-slate-400 mt-1">Assign to a specific warehouse depot or apply globally.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Description</label>
+                <textarea name="description" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">{{ $workflow->description }}</textarea>
+            </div>
+
+            <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
+                <button type="button" onclick="document.getElementById('editWorkflowModal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700">Cancel</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30">Save Changes</button>
             </div>
         </form>
     </div>
@@ -371,6 +450,7 @@
     function openEditStateModal(state) {
         document.getElementById('editStateForm').action = "{{ url('/workflows/states') }}/" + state.id;
         document.getElementById('edit_state_name').value = state.name;
+        document.getElementById('edit_state_location').value = state.location || '';
         document.getElementById('edit_state_color').value = state.color;
         document.getElementById('edit_state_is_initial').checked = state.is_initial ? true : false;
         document.getElementById('edit_state_is_final').checked = state.is_final ? true : false;

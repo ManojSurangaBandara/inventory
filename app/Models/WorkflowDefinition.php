@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WorkflowDefinition extends Model
@@ -13,6 +14,7 @@ class WorkflowDefinition extends Model
 
     protected $fillable = [
         'organization_id',
+        'warehouse_id',
         'name',
         'entity_type',
         'description',
@@ -22,6 +24,11 @@ class WorkflowDefinition extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_id');
+    }
 
     public function states(): HasMany
     {

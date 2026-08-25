@@ -21,9 +21,20 @@
             </h2>
         </div>
 
-        <span class="px-4 py-1.5 rounded-full text-xs font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">
-            Current Stage: {{ $movement->current_state }}
-        </span>
+        <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-4 py-1.5 rounded-full text-xs font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">
+                Current Stage: {{ $movement->current_state }}
+            </span>
+            @php
+                $currStateObj = $workflow ? $workflow->states->firstWhere('code', $movement->current_state) : null;
+            @endphp
+            @if($currStateObj && $currStateObj->location)
+                <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>Stage Location: <strong>{{ $currStateObj->location }}</strong></span>
+                </span>
+            @endif
+        </div>
     </div>
 
     <!-- Rejection Alert Banner if rejected -->

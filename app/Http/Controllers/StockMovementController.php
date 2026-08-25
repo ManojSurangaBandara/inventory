@@ -230,4 +230,68 @@ class StockMovementController extends Controller
 
         return view('stock.show', compact('movement', 'logs', 'workflow', 'availableTransitions'));
     }
+
+    /**
+     * View Current Stock Balance across all items with metrics & filters.
+     */
+    public function stockBalance(Request $request)
+    {
+        $query = InventoryItem::with(['category1', 'category2', 'category3', 'category4']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('stock_status')) {
+            if ($request->stock_status === 'in_stock') {
+                $query->where('current_stock', '>', 0);
+            } elseif ($request->stock_status === 'low_stock') {
+                $query->whereColumn('current_stock', '<=', 'reorder_level')
+                      ->where('current_stock', '>', 0);
+            } elseif ($request->stock_status === 'out_of_stock') {
+                $query->where('current_stock', '<=', 0);
+            }
+        }
+
+        // Sorting
+        $sort = $request->get('sort', 'stock_desc');
+        match ($sort) {
+            'stock_asc' => $query->orderBy('current_stock', 'asc'),
+            'name_asc' => $query->orderBy('name', 'asc'),
+            'sku_asc' => $query->orderBy('sku', 'asc'),
+            'valuation_desc' => $query->orderByRaw('current_stock * unit_cost DESC'),
+            default => $query->orderBy('current_stock', 'desc')->orderBy('name', 'asc'),
+        };
+
+        $items = $query->paginate(15)->withQueryString();
+
+        // Calculate summary KPI stats for current tenant
+        $allItems = InventoryItem::all();
+        $totalUnits = $allItems->sum('current_stock');
+        $totalValuation = $allItems->sum(fn($i) => $i->current_stock * $i->unit_cost);
+        $inStockCount = $allItems->where('current_stock', '>', 0)->count();
+        $lowStockCount = $allItems->filter(fn($i) => $i->current_stock <= $i->reorder_level && $i->current_stock > 0)->count();
+        $outOfStockCount = $allItems->where('current_stock', '<=', 0)->count();
+
+        $categories = \App\Models\Category::category1()->orderBy('name')->get();
+
+        return view('stock.balance', compact(
+            'items',
+            'totalUnits',
+            'totalValuation',
+            'inStockCount',
+            'lowStockCount',
+            'outOfStockCount',
+            'categories'
+        ));
+    }
 }
