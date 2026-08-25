@@ -60,8 +60,8 @@ class DashboardController extends Controller
         $totalTransfers = StockMovement::where('type', 'transfer')->count();
         $pendingTransfers = StockMovement::where('type', 'transfer')->whereNotIn('current_state', ['completed', 'rejected'])->count();
         $recentTransfers = StockMovement::where('type', 'transfer')->with(['items.item', 'item', 'warehouse', 'targetWarehouse'])->latest()->take(4)->get();
-        $transferWorkflow = WorkflowDefinition::where('entity_type', 'StockTransfer')->where('organization_id', $user->organization_id)->first()
-            ?? WorkflowDefinition::where('entity_type', 'StockMovement')->where('organization_id', $user->organization_id)->first();
+        $transferWorkflow = WorkflowDefinition::where('entity_type', 'StockTransfer')->where('organization_id', $user->organization_id)->where('is_active', true)->first()
+            ?? WorkflowDefinition::where('entity_type', 'StockMovement')->where('organization_id', $user->organization_id)->where('is_active', true)->first();
 
         $workflowsCount = WorkflowDefinition::count();
 

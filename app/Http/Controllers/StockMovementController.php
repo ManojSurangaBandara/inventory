@@ -28,23 +28,34 @@ class StockMovementController extends Controller
 
     public function index()
     {
-        $movements = StockMovement::with(['items.item', 'item', 'warehouse', 'targetWarehouse', 'creator'])->latest()->get();
+        $movements = StockMovement::with(['items.item', 'item', 'warehouse', 'targetWarehouse', 'creator', 'workflowDefinition'])
+            ->latest()
+            ->get();
         $items = InventoryItem::all();
         $warehouses = Warehouse::all();
 
-        // Get workflow definition and state colors for UI rendering
-        $workflow = $this->workflowService->getActiveWorkflow('StockMovement', Auth::user()->organization_id);
+        // Get default workflow definition
+        $workflow = $this->workflowService->getActiveWorkflow('StockMovement', Auth::user()->organization_id)
+            ?? $this->workflowService->getActiveWorkflow('StockDispatch', Auth::user()->organization_id)
+            ?? $this->workflowService->getActiveWorkflow('StockReceipt', Auth::user()->organization_id);
 
         $availableTransitionsMap = [];
         $stateDetailsMap = [];
 
-        if ($workflow) {
-            foreach ($workflow->states as $st) {
+        // Build state details across all active workflows for this org
+        $allWorkflows = \App\Models\WorkflowDefinition::where('organization_id', Auth::user()->organization_id)
+            ->where('is_active', true)
+            ->with('states')
+            ->get();
+
+        foreach ($allWorkflows as $wf) {
+            foreach ($wf->states as $st) {
                 $stateDetailsMap[$st->code] = $st;
             }
-            foreach ($movements as $m) {
-                $availableTransitionsMap[$m->id] = $this->workflowService->getAvailableTransitions($m, Auth::user());
-            }
+        }
+
+        foreach ($movements as $m) {
+            $availableTransitionsMap[$m->id] = $this->workflowService->getAvailableTransitions($m, Auth::user());
         }
 
         return view('stock.index', compact('movements', 'items', 'warehouses', 'workflow', 'availableTransitionsMap', 'stateDetailsMap'));
@@ -53,13 +64,12 @@ class StockMovementController extends Controller
     public function transfers()
     {
         $transfers = StockMovement::where('type', 'transfer')
-            ->with(['items.item', 'item', 'warehouse', 'targetWarehouse', 'creator'])
+            ->with(['items.item', 'item', 'warehouse', 'targetWarehouse', 'creator', 'workflowDefinition'])
             ->latest()
             ->get();
         $items = InventoryItem::all();
         $warehouses = Warehouse::all();
-        $workflow = $this->workflowService->getActiveWorkflow('StockTransfer', Auth::user()->organization_id)
-            ?? $this->workflowService->getActiveWorkflow('StockMovement', Auth::user()->organization_id);
+        $workflow = $this->workflowService->getActiveWorkflowForType('transfer', Auth::user()->organization_id);
 
         $availableTransitionsMap = [];
         $stateDetailsMap = [];
@@ -68,9 +78,10 @@ class StockMovementController extends Controller
             foreach ($workflow->states as $st) {
                 $stateDetailsMap[$st->code] = $st;
             }
-            foreach ($transfers as $t) {
-                $availableTransitionsMap[$t->id] = $this->workflowService->getAvailableTransitions($t, Auth::user());
-            }
+        }
+
+        foreach ($transfers as $t) {
+            $availableTransitionsMap[$t->id] = $this->workflowService->getAvailableTransitions($t, Auth::user());
         }
 
         return view('stock.transfers', compact('transfers', 'items', 'warehouses', 'workflow', 'availableTransitionsMap', 'stateDetailsMap'));
@@ -93,10 +104,15 @@ class StockMovementController extends Controller
             'item_lot_number' => 'nullable|string|max:100',
         ]);
 
-        $workflow = $this->workflowService->getActiveWorkflow('StockMovement', Auth::user()->organization_id);
+        $workflow = $this->workflowService->getActiveWorkflowForType($request->type, Auth::user()->organization_id);
         $initialStateCode = $workflow && $workflow->initialState() ? $workflow->initialState()->code : 'draft';
 
-        $refPrefix = ($request->type === 'inbound') ? 'SM-ADD-' : 'SM-REQ-';
+        $refPrefix = match ($request->type) {
+            'inbound' => 'SM-ADD-',
+            'transfer' => 'SM-TRF-',
+            'adjustment' => 'SM-ADJ-',
+            default => 'SM-REQ-',
+        };
         $refCode = $refPrefix . strtoupper(Str::random(6));
 
         // Prepare line items list
@@ -125,7 +141,7 @@ class StockMovementController extends Controller
             return redirect()->back()->withErrors(['items' => 'At least one inventory item must be added to the stock request.'])->withInput();
         }
 
-        $movement = DB::transaction(function () use ($request, $refCode, $initialStateCode, $itemsList) {
+        $movement = DB::transaction(function () use ($request, $refCode, $initialStateCode, $itemsList, $workflow) {
             $firstItem = $itemsList[0];
             $lotsSummary = implode(', ', array_unique(array_column($itemsList, 'item_lot_number')));
 
@@ -140,6 +156,7 @@ class StockMovementController extends Controller
                 'item_lot_number' => $lotsSummary,
                 'source_system' => 'manual',
                 'current_state' => $initialStateCode,
+                'workflow_definition_id' => $workflow?->id,
                 'created_by' => Auth::id(),
                 'notes' => $request->notes,
             ]);
@@ -201,14 +218,14 @@ class StockMovementController extends Controller
 
     public function show(int $id)
     {
-        $movement = StockMovement::with(['items.item', 'item', 'warehouse', 'targetWarehouse', 'creator'])->findOrFail($id);
+        $movement = StockMovement::with(['items.item', 'item', 'warehouse', 'targetWarehouse', 'creator', 'workflowDefinition'])->findOrFail($id);
         $logs = WorkflowLog::where('entity_type', 'StockMovement')
             ->where('entity_id', $movement->id)
             ->with('user')
             ->latest()
             ->get();
 
-        $workflow = $this->workflowService->getActiveWorkflow('StockMovement', Auth::user()->organization_id);
+        $workflow = $this->workflowService->getWorkflowForEntity($movement);
         $availableTransitions = $this->workflowService->getAvailableTransitions($movement, Auth::user());
 
         return view('stock.show', compact('movement', 'logs', 'workflow', 'availableTransitions'));

@@ -12,7 +12,18 @@
             <div class="flex items-center space-x-2">
                 <a href="{{ route('workflows.index') }}" class="text-xs text-indigo-400 hover:underline font-semibold">&larr; Back to Workflows</a>
                 <span class="text-slate-400">•</span>
-                <span class="text-xs font-bold uppercase text-slate-400 tracking-wider">{{ $workflow->entity_type }} Module</span>
+                @php
+                    $friendlyEntity = [
+                        'StockDispatch' => 'Stock Dispatch (Outbound)',
+                        'StockReceipt' => 'Stock Receipt (Inbound)',
+                        'StockTransfer' => 'Inter-Warehouse Transfer',
+                        'StockAdjustment' => 'Stock Status & Adjustment',
+                        'StockMovement' => 'Stock Movement Lifecycle',
+                        'PurchaseOrder' => 'Purchase Order Lifecycle',
+                        'InventoryItem' => 'Inventory Item Lifecycle',
+                    ][$workflow->entity_type] ?? ($workflow->entity_type . ' Module');
+                @endphp
+                <span class="text-xs font-bold uppercase text-slate-400 tracking-wider">{{ $friendlyEntity }}</span>
             </div>
             <h2 class="text-xl font-bold text-white">{{ $workflow->name }}</h2>
             <p class="text-xs text-slate-400">{{ $workflow->description ?? 'Configure states and action rules visually.' }}</p>

@@ -124,8 +124,13 @@ class ItemRequestApiController extends Controller
             ], 422);
         }
 
-        // Resolve initial workflow state for StockMovement
+        // Resolve initial workflow state for Outbound Stock Dispatch
         $workflow = WorkflowDefinition::where('organization_id', $orgId)
+            ->where('entity_type', 'StockDispatch')
+            ->where('is_active', true)
+            ->with(['states', 'transitions'])
+            ->first()
+            ?? WorkflowDefinition::where('organization_id', $orgId)
             ->where('entity_type', 'StockMovement')
             ->where('is_active', true)
             ->with(['states', 'transitions'])
@@ -144,7 +149,7 @@ class ItemRequestApiController extends Controller
         $totalQty = array_sum(array_column($resolvedItems, 'quantity'));
         $lotsSummary = implode(', ', array_unique(array_column($resolvedItems, 'lot_number')));
 
-        $movement = DB::transaction(function () use ($orgId, $referenceCode, $warehouse, $firstItem, $totalQty, $lotsSummary, $initialStateCode, $request, $resolvedItems) {
+        $movement = DB::transaction(function () use ($orgId, $referenceCode, $warehouse, $firstItem, $totalQty, $lotsSummary, $initialStateCode, $request, $resolvedItems, $workflow) {
             $sm = StockMovement::create([
                 'organization_id' => $orgId,
                 'reference_code' => $referenceCode,
@@ -155,6 +160,7 @@ class ItemRequestApiController extends Controller
                 'item_lot_number' => $lotsSummary,
                 'source_system' => 'workshop_api',
                 'current_state' => $initialStateCode,
+                'workflow_definition_id' => $workflow?->id,
                 'created_by' => null, // Created via API
                 'notes' => 'API Request from Workshop Management System: ' . ($request->input('notes') ?? 'Standard item issue request.'),
             ]);

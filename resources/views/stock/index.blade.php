@@ -51,9 +51,15 @@
                                 </div>
                                 <div>
                                     @if($m->type === 'inbound')
-                                        <span class="text-emerald-400 font-bold">Add to Main Stock</span>
+                                        <span class="text-emerald-400 font-bold">Inbound (Add Stock)</span>
+                                    @elseif($m->type === 'outbound')
+                                        <span class="text-amber-400 font-bold">Outbound (Issue)</span>
+                                    @elseif($m->type === 'transfer')
+                                        <span class="text-blue-400 font-bold">Transfer</span>
+                                    @elseif($m->type === 'adjustment')
+                                        <span class="text-purple-400 font-bold">Stock Adjustment</span>
                                     @else
-                                        <span class="text-amber-400 font-bold">Item Issue Request</span>
+                                        <span class="text-slate-300 font-bold">{{ ucfirst($m->type) }}</span>
                                     @endif
                                 </div>
                             </td>
@@ -142,8 +148,8 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Process Type *</label>
                     <select name="type" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
-                        <option value="inbound">Add items to main stock (Inbound Lot Addition)</option>
-                        <option value="outbound">Item Request Process (Outbound Issue)</option>
+                        <option value="inbound">Inbound (Add Items to Main Stock)</option>
+                        <option value="outbound">Outbound (Item Issue Requisition)</option>
                     </select>
                 </div>
 

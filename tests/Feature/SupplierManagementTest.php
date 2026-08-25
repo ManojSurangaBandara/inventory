@@ -60,8 +60,8 @@ class SupplierManagementTest extends TestCase
                 'supplier_id' => $usedSupplier->id,
                 'warehouse_id' => 1,
                 'po_number' => 'PO-TEST-DEP-001',
-                'status' => 'draft',
-                'order_date' => now(),
+                'created_by' => $admin->id,
+                'notes' => 'Test order',
                 'total_amount' => 500,
             ]);
         }
@@ -98,8 +98,8 @@ class SupplierManagementTest extends TestCase
                 'supplier_id' => $used->id,
                 'warehouse_id' => 1,
                 'po_number' => 'PO-TEST-VIS-002',
-                'status' => 'draft',
-                'order_date' => now(),
+                'created_by' => $admin->id,
+                'notes' => 'Test order',
                 'total_amount' => 750,
             ]);
         }

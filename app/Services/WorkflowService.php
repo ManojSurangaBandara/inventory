@@ -35,12 +35,61 @@ class WorkflowService
     }
 
     /**
+     * Get active workflow specifically for a stock movement lifecycle type.
+     * Checks specialized workflow first, falling back to general StockMovement workflow.
+     */
+    public function getActiveWorkflowForType(string $movementType, ?int $organizationId = null): ?WorkflowDefinition
+    {
+        $typeMapping = [
+            'outbound' => 'StockDispatch',
+            'inbound' => 'StockReceipt',
+            'transfer' => 'StockTransfer',
+            'adjustment' => 'StockAdjustment',
+        ];
+
+        $targetEntity = $typeMapping[$movementType] ?? 'StockMovement';
+
+        // 1. Try specialized entity type workflow
+        $workflow = $this->getActiveWorkflow($targetEntity, $organizationId);
+        if ($workflow) {
+            return $workflow;
+        }
+
+        // 2. Fallback to general StockMovement workflow
+        if ($targetEntity !== 'StockMovement') {
+            return $this->getActiveWorkflow('StockMovement', $organizationId);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the bound or active workflow definition for any entity model.
+     */
+    public function getWorkflowForEntity(Model $entity): ?WorkflowDefinition
+    {
+        if ($entity instanceof StockMovement) {
+            if (!empty($entity->workflow_definition_id)) {
+                $boundWf = WorkflowDefinition::with(['states', 'transitions.fromState', 'transitions.toState'])
+                    ->find($entity->workflow_definition_id);
+                if ($boundWf) {
+                    return $boundWf;
+                }
+            }
+
+            return $this->getActiveWorkflowForType($entity->type ?? 'inbound', $entity->organization_id);
+        }
+
+        $entityType = class_basename($entity);
+        return $this->getActiveWorkflow($entityType, $entity->organization_id);
+    }
+
+    /**
      * Get available transitions for an entity in its current state.
      */
     public function getAvailableTransitions(Model $entity, User $user): array
     {
-        $entityType = class_basename($entity);
-        $workflow = $this->getActiveWorkflow($entityType, $entity->organization_id);
+        $workflow = $this->getWorkflowForEntity($entity);
 
         if (!$workflow) {
             return [];
@@ -96,8 +145,13 @@ class WorkflowService
 
             $entity->current_state = $toStateCode;
 
-            if ($entity instanceof StockMovement && (str_contains(strtolower($toStateCode), 'reject') || $toStateCode === 'rejected')) {
-                $entity->rejection_reason = $notes;
+            if ($entity instanceof StockMovement) {
+                if (empty($entity->workflow_definition_id)) {
+                    $entity->workflow_definition_id = $transition->workflow_definition_id;
+                }
+                if (str_contains(strtolower($toStateCode), 'reject') || $toStateCode === 'rejected') {
+                    $entity->rejection_reason = $notes;
+                }
             }
 
             $entity->save();

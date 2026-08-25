@@ -25,7 +25,7 @@ class WorkflowController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'entity_type' => 'required|string|in:StockMovement,PurchaseOrder,InventoryItem',
+            'entity_type' => 'required|string|in:StockMovement,StockDispatch,StockReceipt,StockTransfer,StockAdjustment,PurchaseOrder,InventoryItem',
             'description' => 'nullable|string',
         ]);
 
@@ -38,6 +38,16 @@ class WorkflowController extends Controller
         ]);
 
         return redirect()->route('workflows.builder', $workflow->id)->with('success', "Workflow '{$workflow->name}' created. Add custom state steps to configure the pipeline.");
+    }
+
+    public function toggleActive(int $id)
+    {
+        $workflow = WorkflowDefinition::where('organization_id', Auth::user()->organization_id)->findOrFail($id);
+        $workflow->is_active = !$workflow->is_active;
+        $workflow->save();
+
+        $statusStr = $workflow->is_active ? 'activated' : 'deactivated';
+        return redirect()->back()->with('success', "Workflow '{$workflow->name}' has been {$statusStr}.");
     }
 
     public function destroyDefinition(int $id)

@@ -18,17 +18,31 @@
     <!-- Workflows Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         @forelse($workflows as $wf)
-            <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between space-y-4 hover:border-indigo-500/30 transition">
+            @php
+                $moduleMeta = [
+                    'StockDispatch' => ['label' => 'Outbound Dispatch', 'color' => 'bg-amber-500/10 text-amber-400 border-amber-500/30'],
+                    'StockReceipt' => ['label' => 'Inbound Receipt', 'color' => 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'],
+                    'StockTransfer' => ['label' => 'Stock Transfer', 'color' => 'bg-blue-500/10 text-blue-400 border-blue-500/30'],
+                    'StockAdjustment' => ['label' => 'Status & Adjustment', 'color' => 'bg-purple-500/10 text-purple-400 border-purple-500/30'],
+                    'StockMovement' => ['label' => 'General Movement', 'color' => 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'],
+                    'PurchaseOrder' => ['label' => 'Purchase Order', 'color' => 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'],
+                    'InventoryItem' => ['label' => 'Item Master', 'color' => 'bg-slate-500/10 text-slate-400 border-slate-500/30'],
+                ][$wf->entity_type] ?? ['label' => $wf->entity_type, 'color' => 'bg-slate-500/10 text-slate-400 border-slate-500/30'];
+            @endphp
+            <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between space-y-4 hover:border-indigo-500/30 transition {{ !$wf->is_active ? 'opacity-70' : '' }}">
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                        <span class="px-2.5 py-1 rounded-full text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold uppercase tracking-wider">
-                            {{ $wf->entity_type }}
+                        <span class="px-2.5 py-1 rounded-full text-[10px] {{ $moduleMeta['color'] }} border font-bold uppercase tracking-wider">
+                            {{ $moduleMeta['label'] }}
                         </span>
                         <div class="flex items-center space-x-2">
-                            <span class="flex items-center space-x-1 text-[10px] text-emerald-400 font-semibold">
-                                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                                <span>Active</span>
-                            </span>
+                            <form action="{{ route('workflows.toggle-active', $wf->id) }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" title="Click to toggle (Currently {{ $wf->is_active ? 'Active' : 'Inactive' }})" class="flex items-center space-x-1 text-[10px] {{ $wf->is_active ? 'text-emerald-400 hover:text-emerald-300' : 'text-slate-500 hover:text-slate-400' }} font-semibold px-2 py-0.5 rounded-full {{ $wf->is_active ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-slate-800 border border-slate-700' }} transition">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $wf->is_active ? 'bg-emerald-400' : 'bg-slate-500' }}"></span>
+                                    <span>{{ $wf->is_active ? 'Active' : 'Inactive' }}</span>
+                                </button>
+                            </form>
                             <form action="{{ route('workflows.destroy', $wf->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete workflow \'{{ $wf->name }}\'?')">
                                 @csrf
                                 @method('DELETE')
@@ -71,7 +85,7 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 </div>
                 <h3 class="text-white font-bold text-sm">No Workflows Defined</h3>
-                <p class="text-xs text-slate-400 max-w-sm mx-auto">Create custom workflows to control approval steps and status changes for Stock Movements and Purchase Orders.</p>
+                <p class="text-xs text-slate-400 max-w-sm mx-auto">Create custom workflows to control approval steps and status changes for Dispatches, Receipts, Transfers, and Purchase Orders.</p>
             </div>
         @endempty
     </div>
@@ -89,18 +103,16 @@
             @csrf
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Workflow Title *</label>
-                <input type="text" name="name" required placeholder="e.g. Stock Receipt Inspection Workflow" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <input type="text" name="name" required placeholder="e.g. Stock Dispatch Clearance Pipeline" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Target Module / Entity *</label>
                 <select name="entity_type" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
-                    <option value="StockMovement">Stock Movement Lifecycle</option>
-                    {{-- Temporarily hidden:
-                    <option value="PurchaseOrder">Purchase Order Lifecycle</option>
-                    <option value="InventoryItem">Inventory Item Lifecycle</option>
-                    --}}
+                    <option value="StockDispatch">Stock Dispatches (Outbound Issue / Requisition)</option>
+                    <option value="StockReceipt">Stock Receipts (Inbound Receiving / Lot Addition)</option>
                 </select>
+                <p class="text-[10px] text-slate-400 mt-1">Select the lifecycle process this approval machine controls.</p>
             </div>
 
             <div>

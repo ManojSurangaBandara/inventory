@@ -160,6 +160,15 @@ class DatabaseSeeder extends Seeder
         $catParts = Category::create(['organization_id' => $apexOrg->id, 'name' => 'Industrial Parts', 'description' => 'Cables, sensors, robotics parts']);
 
         $whMain = Warehouse::create(['organization_id' => $apexOrg->id, 'name' => 'Main Distribution Hub', 'code' => 'WH-MAIN', 'location' => 'Zone A Depot']);
+        $whSecondary = Warehouse::create(['organization_id' => $apexOrg->id, 'name' => 'West Coast Distribution Center', 'code' => 'WH-WEST', 'location' => 'Zone B Depot']);
+
+        $supplier = Supplier::create([
+            'organization_id' => $apexOrg->id,
+            'name' => 'Apex Premier Supplies',
+            'email' => 'orders@apexsupplies.com',
+            'phone' => '+1 (555) 443-8822',
+            'address' => '44 Industrial Crescent, Sector 9',
+        ]);
 
         $itemLaptop = InventoryItem::create([
             'organization_id' => $apexOrg->id,
@@ -187,7 +196,8 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
         ]);
 
-        // 5. Seed Pre-configured Workflow 1: "Add Items to Main Stock Workflow" (PDF Page 2 Flowchart)
+        // 5. Seed Pre-configured Workflows
+        // Workflow 1: "Add Items to Main Stock Workflow" (General StockMovement / Receipt fallback)
         $addStockWf = WorkflowDefinition::create([
             'organization_id' => $apexOrg->id,
             'name' => 'Add Items to Main Stock Workflow (OC -> QM -> CO)',
@@ -274,6 +284,39 @@ class DatabaseSeeder extends Seeder
             'requires_note' => true,
         ]);
 
+        // Workflow 2: "Inter-Warehouse Stock Transfer Protocol"
+        $transferWf = WorkflowDefinition::create([
+            'organization_id' => $apexOrg->id,
+            'name' => 'Inter-Depot Stock Transfer Workflow',
+            'entity_type' => 'StockTransfer',
+            'description' => 'Multi-stage dispatch, transit tracking, and destination depot receipt protocol',
+            'is_active' => true,
+        ]);
+
+        $stTrfDraft = WorkflowState::create(['organization_id' => $apexOrg->id, 'workflow_definition_id' => $transferWf->id, 'code' => 'draft', 'name' => 'Transfer Request Created', 'color' => 'slate', 'is_initial' => true, 'is_final' => false]);
+        $stTrfTransit = WorkflowState::create(['organization_id' => $apexOrg->id, 'workflow_definition_id' => $transferWf->id, 'code' => 'in_transit', 'name' => 'Dispatched / In Transit', 'color' => 'amber', 'is_initial' => false, 'is_final' => false]);
+        $stTrfReceived = WorkflowState::create(['organization_id' => $apexOrg->id, 'workflow_definition_id' => $transferWf->id, 'code' => 'completed', 'name' => 'Received & Stored at Destination', 'color' => 'emerald', 'is_initial' => false, 'is_final' => true]);
+
+        WorkflowTransition::create([
+            'organization_id' => $apexOrg->id,
+            'workflow_definition_id' => $transferWf->id,
+            'from_state_id' => $stTrfDraft->id,
+            'to_state_id' => $stTrfTransit->id,
+            'action_name' => 'Dispatch Shipment to Transit',
+            'allowed_roles' => ['storemen', 'inventory-manager', 'subject-clerk'],
+            'requires_note' => false,
+        ]);
+
+        WorkflowTransition::create([
+            'organization_id' => $apexOrg->id,
+            'workflow_definition_id' => $transferWf->id,
+            'from_state_id' => $stTrfTransit->id,
+            'to_state_id' => $stTrfReceived->id,
+            'action_name' => 'Confirm Destination Depot Receipt',
+            'allowed_roles' => ['storemen', 'oc', 'inventory-manager'],
+            'requires_note' => false,
+        ]);
+
         // Seed Sample Inbound Stock Request (Add items to main stock)
         $smInbound = StockMovement::create([
             'organization_id' => $apexOrg->id,
@@ -337,6 +380,42 @@ class DatabaseSeeder extends Seeder
             'inventory_item_id' => $itemCable->id,
             'quantity' => 10,
             'item_lot_number' => 'LOT-WMS-55',
+        ]);
+
+        // Seed Sample Transfer Movement
+        $smTransfer = StockMovement::create([
+            'organization_id' => $apexOrg->id,
+            'reference_code' => 'SM-TRF-001',
+            'type' => 'transfer',
+            'warehouse_id' => $whMain->id,
+            'target_warehouse_id' => $whSecondary->id,
+            'inventory_item_id' => $itemLaptop->id,
+            'quantity' => 5,
+            'item_lot_number' => 'LOT-2026-DEL1',
+            'source_system' => 'manual',
+            'current_state' => 'in_transit',
+            'workflow_definition_id' => $transferWf->id,
+            'created_by' => $userStoremen->id,
+            'notes' => 'Transfer 5 Dell Laptops from Main Hub to West Coast Distribution Center.',
+        ]);
+
+        StockMovementItem::create([
+            'organization_id' => $apexOrg->id,
+            'stock_movement_id' => $smTransfer->id,
+            'inventory_item_id' => $itemLaptop->id,
+            'quantity' => 5,
+            'item_lot_number' => 'LOT-2026-DEL1',
+        ]);
+
+        WorkflowLog::create([
+            'organization_id' => $apexOrg->id,
+            'entity_type' => 'StockMovement',
+            'entity_id' => $smTransfer->id,
+            'from_state' => 'draft',
+            'to_state' => 'in_transit',
+            'action' => 'Dispatch Shipment to Transit',
+            'user_id' => $userStoremen->id,
+            'notes' => 'Shipment dispatched via Express Freight convoy.',
         ]);
 
         // Seed Initial Notifications

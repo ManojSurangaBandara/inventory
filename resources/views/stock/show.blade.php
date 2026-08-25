@@ -45,9 +45,15 @@
             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Requisition Type & Warehouse</span>
             <div class="font-bold text-white text-base">
                 @if($movement->type === 'inbound')
-                    <span class="text-emerald-400">Add to Main Stock (Inbound)</span>
+                    <span class="text-emerald-400">Inbound Lot Addition</span>
+                @elseif($movement->type === 'outbound')
+                    <span class="text-amber-400">Outbound Item Requisition</span>
+                @elseif($movement->type === 'transfer')
+                    <span class="text-blue-400">Inter-Warehouse Transfer</span>
+                @elseif($movement->type === 'adjustment')
+                    <span class="text-purple-400">Stock Status Adjustment</span>
                 @else
-                    <span class="text-amber-400">Item Issue Requisition (Outbound)</span>
+                    <span class="text-slate-300">{{ ucfirst($movement->type) }}</span>
                 @endif
             </div>
             <div class="text-xs text-slate-300">Warehouse: <strong class="text-white">{{ $movement->warehouse->name ?? 'N/A' }}</strong></div>

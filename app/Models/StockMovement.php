@@ -23,10 +23,16 @@ class StockMovement extends Model
         'item_lot_number',
         'source_system',
         'current_state',
+        'workflow_definition_id',
         'created_by',
         'notes',
         'rejection_reason',
     ];
+
+    public function workflowDefinition(): BelongsTo
+    {
+        return $this->belongsTo(WorkflowDefinition::class, 'workflow_definition_id');
+    }
 
     public function warehouse(): BelongsTo
     {
