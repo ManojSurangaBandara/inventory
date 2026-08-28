@@ -30,6 +30,7 @@ class WarehouseManagementTest extends TestCase
         $storeRes = $this->post(route('inventory.warehouses.store'), [
             'name' => 'Mistaken Depot East',
             'code' => 'WH-MISTAKE-EAST',
+            'type' => 'sub',
             'location' => 'Block 9, East Yard',
         ]);
         $storeRes->assertRedirect(route('inventory.warehouses'));
