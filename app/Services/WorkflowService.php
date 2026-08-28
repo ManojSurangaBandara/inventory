@@ -13,6 +13,8 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\WarehouseStock;
+
 class WorkflowService
 {
     protected NotificationService $notificationService;
@@ -215,31 +217,24 @@ class WorkflowService
 
             if ($movement->items->isNotEmpty()) {
                 foreach ($movement->items as $movementItem) {
-                    $item = $movementItem->item ?? InventoryItem::find($movementItem->inventory_item_id);
-                    if ($item) {
-                        if ($movement->type === 'inbound') {
-                            $item->increment('current_stock', $movementItem->quantity);
-                        } elseif ($movement->type === 'outbound') {
-                            $item->decrement('current_stock', min($item->current_stock, $movementItem->quantity));
-                        } elseif ($movement->type === 'adjustment') {
-                            $item->current_stock = max(0, $movementItem->quantity);
-                            $item->save();
-                        }
-                    }
+                    $this->adjustItemAndWarehouseStock(
+                        $movement->organization_id,
+                        $movementItem->inventory_item_id,
+                        $movement->warehouse_id,
+                        $movement->target_warehouse_id,
+                        $movement->type,
+                        (float) $movementItem->quantity
+                    );
                 }
             } elseif ($movement->inventory_item_id) {
-                // Fallback for single item movement
-                $item = InventoryItem::find($movement->inventory_item_id);
-                if ($item) {
-                    if ($movement->type === 'inbound') {
-                        $item->increment('current_stock', $movement->quantity);
-                    } elseif ($movement->type === 'outbound') {
-                        $item->decrement('current_stock', min($item->current_stock, $movement->quantity));
-                    } elseif ($movement->type === 'adjustment') {
-                        $item->current_stock = max(0, $movement->quantity);
-                        $item->save();
-                    }
-                }
+                $this->adjustItemAndWarehouseStock(
+                    $movement->organization_id,
+                    $movement->inventory_item_id,
+                    $movement->warehouse_id,
+                    $movement->target_warehouse_id,
+                    $movement->type,
+                    (float) $movement->quantity
+                );
             }
 
             $this->notificationService->notifyCompletion($movement, $movement->type);
@@ -260,5 +255,73 @@ class WorkflowService
         $allowedRoles = array_unique($allowedRoles);
 
         $this->notificationService->notifyNextApprovers($movement, $toState->name, $allowedRoles);
+    }
+
+    /**
+     * Synchronize stock balance on both master InventoryItem and specific WarehouseStock records.
+     */
+    protected function adjustItemAndWarehouseStock(
+        int $orgId,
+        int $itemId,
+        ?int $warehouseId,
+        ?int $targetWarehouseId,
+        string $type,
+        float $qty
+    ): void {
+        $item = InventoryItem::find($itemId);
+        if (!$item) {
+            return;
+        }
+
+        if ($type === 'inbound') {
+            $item->increment('current_stock', $qty);
+
+            if ($warehouseId) {
+                $whStock = WarehouseStock::firstOrCreate(
+                    ['organization_id' => $orgId, 'warehouse_id' => $warehouseId, 'inventory_item_id' => $itemId],
+                    ['current_stock' => 0, 'reorder_level' => $item->reorder_level]
+                );
+                $whStock->increment('current_stock', $qty);
+            }
+        } elseif ($type === 'outbound') {
+            $item->decrement('current_stock', min($item->current_stock, $qty));
+
+            if ($warehouseId) {
+                $whStock = WarehouseStock::firstOrCreate(
+                    ['organization_id' => $orgId, 'warehouse_id' => $warehouseId, 'inventory_item_id' => $itemId],
+                    ['current_stock' => 0, 'reorder_level' => $item->reorder_level]
+                );
+                $whStock->decrement('current_stock', min($whStock->current_stock, $qty));
+            }
+        } elseif ($type === 'transfer') {
+            // Transfer shifts stock between warehouses without altering organization-wide total
+            if ($warehouseId) {
+                $originStock = WarehouseStock::firstOrCreate(
+                    ['organization_id' => $orgId, 'warehouse_id' => $warehouseId, 'inventory_item_id' => $itemId],
+                    ['current_stock' => 0, 'reorder_level' => $item->reorder_level]
+                );
+                $originStock->decrement('current_stock', min($originStock->current_stock, $qty));
+            }
+
+            if ($targetWarehouseId) {
+                $targetStock = WarehouseStock::firstOrCreate(
+                    ['organization_id' => $orgId, 'warehouse_id' => $targetWarehouseId, 'inventory_item_id' => $itemId],
+                    ['current_stock' => 0, 'reorder_level' => $item->reorder_level]
+                );
+                $targetStock->increment('current_stock', $qty);
+            }
+        } elseif ($type === 'adjustment') {
+            $item->current_stock = max(0, $qty);
+            $item->save();
+
+            if ($warehouseId) {
+                $whStock = WarehouseStock::firstOrCreate(
+                    ['organization_id' => $orgId, 'warehouse_id' => $warehouseId, 'inventory_item_id' => $itemId],
+                    ['current_stock' => 0, 'reorder_level' => $item->reorder_level]
+                );
+                $whStock->current_stock = max(0, $qty);
+                $whStock->save();
+            }
+        }
     }
 }

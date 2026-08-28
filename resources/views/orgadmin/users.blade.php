@@ -6,8 +6,8 @@
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-xl font-bold text-white">Users</h2>
-            <p class="text-xs text-slate-400">Manage user accounts and assign custom organization roles for {{ Auth::user()->organization->name ?? 'your organization' }}.</p>
+            <h2 class="text-xl font-bold text-white">Users & Facility Access</h2>
+            <p class="text-xs text-slate-400">Manage user accounts, assign warehouse locations (Subject Clerks / Storemen), and configure roles for {{ Auth::user()->organization->name ?? 'your organization' }}.</p>
         </div>
         <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
@@ -23,6 +23,7 @@
                     <tr>
                         <th class="px-4 py-3.5">User</th>
                         <th class="px-4 py-3.5">Email</th>
+                        <th class="px-4 py-3.5">Assigned Facility / Warehouse</th>
                         <th class="px-4 py-3.5">Assigned Roles</th>
                         <th class="px-4 py-3.5">Admin Level</th>
                         <th class="px-4 py-3.5">Status</th>
@@ -44,6 +45,27 @@
                                 </div>
                             </td>
                             <td class="px-4 py-4 text-slate-300">{{ $u->email }}</td>
+                            
+                            <!-- Assigned Facility / Warehouse -->
+                            <td class="px-4 py-4">
+                                @if($u->warehouse)
+                                    <div class="space-y-0.5">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider {{ $u->warehouse->type_badge_class }}">
+                                            {{ $u->warehouse->type_label }}
+                                        </span>
+                                        <div class="font-semibold text-white text-xs mt-1 flex items-center gap-1">
+                                            <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            <span>{{ $u->warehouse->name }}</span>
+                                        </div>
+                                    </div>
+                                @else
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 border border-slate-700 font-medium flex items-center gap-1 w-fit">
+                                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <span>All Facilities (Global)</span>
+                                    </span>
+                                @endif
+                            </td>
+
                             <td class="px-4 py-4">
                                 <div class="flex flex-wrap gap-1">
                                     @forelse($u->roles as $r)
@@ -71,13 +93,13 @@
                             </td>
                             <td class="px-4 py-4 text-right">
                                 <button onclick="editUser({{ json_encode($u) }}, {{ json_encode($u->roles->pluck('id')) }})" class="px-3.5 py-1.5 rounded-xl border border-slate-700 text-[11px] font-semibold text-slate-300 hover:bg-slate-800 transition shadow-sm">
-                                    Edit Roles & Access
+                                    Edit Roles & Facility
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-slate-500">No organization users created yet.</td>
+                            <td colspan="7" class="px-4 py-8 text-center text-slate-500">No organization users created yet.</td>
                         </tr>
                     @endempty
                 </tbody>
@@ -98,17 +120,29 @@
             @csrf
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name *</label>
-                <input type="text" name="name" required placeholder="Alice Inspector" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <input type="text" name="name" required placeholder="e.g. Kamal Perera (Subject Clerk)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address *</label>
-                <input type="email" name="email" required placeholder="alice@apexlogistics.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <input type="email" name="email" required placeholder="clerk@apexlogistics.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Password *</label>
                 <input type="password" name="password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+
+            <!-- Assigned Warehouse Location -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Facility / Warehouse Location</label>
+                <select name="warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-medium">
+                    <option value="">-- All Facilities / Global Headquarters --</option>
+                    @foreach($warehouses as $wh)
+                        <option value="{{ $wh->id }}">[{{ $wh->type_label }}] {{ $wh->name }} ({{ $wh->code }})</option>
+                    @endforeach
+                </select>
+                <p class="text-[10px] text-slate-400 mt-1">Assign to a specific warehouse to scope stock balance and requests to this depot.</p>
             </div>
 
             <div class="flex items-center space-x-2 pt-1">
@@ -145,7 +179,7 @@
 <div id="editUserModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 class="font-bold text-white text-base">Edit User & Roles</h3>
+            <h3 class="font-bold text-white text-base">Edit User & Facility Access</h3>
             <button onclick="document.getElementById('editUserModal').classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>
         </div>
 
@@ -166,6 +200,18 @@
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">New Password (leave empty to keep current)</label>
                 <input type="password" name="password" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+
+            <!-- Assigned Warehouse Location -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Facility / Warehouse Location</label>
+                <select name="warehouse_id" id="edit_warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-medium">
+                    <option value="">-- All Facilities / Global Headquarters --</option>
+                    @foreach($warehouses as $wh)
+                        <option value="{{ $wh->id }}">[{{ $wh->type_label }}] {{ $wh->name }} ({{ $wh->code }})</option>
+                    @endforeach
+                </select>
+                <p class="text-[10px] text-slate-400 mt-1">Assign to a specific warehouse to scope stock balance and requests to this depot.</p>
             </div>
 
             <div>
@@ -207,6 +253,7 @@
         document.getElementById('edit_name').value = user.name;
         document.getElementById('edit_email').value = user.email;
         document.getElementById('edit_status').value = user.status;
+        document.getElementById('edit_warehouse_id').value = (user.warehouse_id !== null && user.warehouse_id !== undefined) ? user.warehouse_id.toString() : '';
         document.getElementById('edit_is_org_admin').checked = user.is_org_admin == 1;
 
         // Uncheck all roles first

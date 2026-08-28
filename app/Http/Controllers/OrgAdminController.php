@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class OrgAdminController extends Controller
@@ -19,13 +21,14 @@ class OrgAdminController extends Controller
     {
         $users = User::where('organization_id', Auth::user()->organization_id)
             ->where('is_super_admin', false)
-            ->with('roles')
+            ->with(['roles', 'warehouse'])
             ->latest()
             ->get();
 
         $roles = Role::where('organization_id', Auth::user()->organization_id)->get();
+        $warehouses = Warehouse::where('organization_id', Auth::user()->organization_id)->orderBy('name')->get();
 
-        return view('orgadmin.users', compact('users', 'roles'));
+        return view('orgadmin.users', compact('users', 'roles', 'warehouses'));
     }
 
     public function storeUser(Request $request)
@@ -36,11 +39,13 @@ class OrgAdminController extends Controller
             'password' => 'required|string|min:6',
             'roles' => 'nullable|array',
             'roles.*' => 'exists:roles,id',
+            'warehouse_id' => 'nullable',
             'is_org_admin' => 'nullable|boolean',
         ]);
 
         $user = User::create([
             'organization_id' => Auth::user()->organization_id,
+            'warehouse_id' => $request->filled('warehouse_id') ? (int) $request->warehouse_id : null,
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -66,6 +71,7 @@ class OrgAdminController extends Controller
             'password' => 'nullable|string|min:6',
             'status' => 'required|in:active,inactive',
             'roles' => 'nullable|array',
+            'warehouse_id' => 'nullable',
             'is_org_admin' => 'nullable|boolean',
         ]);
 
@@ -73,6 +79,7 @@ class OrgAdminController extends Controller
         $user->email = $request->email;
         $user->status = $request->status;
         $user->is_org_admin = $request->boolean('is_org_admin');
+        $user->warehouse_id = $request->filled('warehouse_id') ? (int) $request->warehouse_id : null;
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
@@ -84,7 +91,7 @@ class OrgAdminController extends Controller
             $user->roles()->sync($request->roles);
         }
 
-        return redirect()->route('orgadmin.users')->with('success', "User '{$user->name}' updated.");
+        return redirect()->route('orgadmin.users')->with('success', "User '{$user->name}' updated successfully.");
     }
 
     /**

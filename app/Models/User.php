@@ -19,6 +19,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'organization_id',
+        'warehouse_id',
         'name',
         'email',
         'password',
@@ -55,6 +56,17 @@ class User extends Authenticatable
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    public function isWarehouseScoped(): bool
+    {
+        $whId = $this->attributes['warehouse_id'] ?? null;
+        return !empty($whId) && !$this->isOrgAdmin() && !$this->isSuperAdmin();
     }
 
     public function roles(): BelongsToMany

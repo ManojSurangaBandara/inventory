@@ -8,6 +8,7 @@ use App\Models\Supplier;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class InventoryController extends Controller
 {
@@ -255,30 +256,80 @@ class InventoryController extends Controller
      */
     public function warehouses()
     {
-        $warehouses = Warehouse::withCount([
-            'stockMovements',
-            'purchaseOrders',
-        ])->get();
+        $warehousesQuery = Warehouse::where('organization_id', Auth::user()->organization_id)
+            ->withCount([
+                'stockMovements',
+                'purchaseOrders',
+            ]);
+
+        if (Schema::hasTable('warehouse_stocks')) {
+            $warehousesQuery->withCount('stocks')->with(['stocks']);
+        }
+
+        $warehouses = $warehousesQuery->get();
 
         return view('inventory.warehouses', compact('warehouses'));
     }
 
     public function storeWarehouse(Request $request)
     {
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50',
             'location' => 'nullable|string',
-        ]);
+        ];
 
-        Warehouse::create([
+        if (Schema::hasColumn('warehouses', 'type')) {
+            $rules['type'] = 'required|string|in:main,sub,unit';
+        }
+
+        $request->validate($rules);
+
+        $data = [
             'organization_id' => Auth::user()->organization_id,
             'name' => $request->name,
             'code' => strtoupper($request->code),
             'location' => $request->location,
-        ]);
+        ];
 
-        return redirect()->route('inventory.warehouses')->with('success', "Warehouse added.");
+        if (Schema::hasColumn('warehouses', 'type')) {
+            $data['type'] = $request->type ?? 'main';
+        }
+
+        Warehouse::create($data);
+
+        return redirect()->route('inventory.warehouses')->with('success', "Warehouse added successfully.");
+    }
+
+    public function updateWarehouse(Request $request, int $id)
+    {
+        $warehouse = Warehouse::where('organization_id', Auth::user()->organization_id)->findOrFail($id);
+
+        $rules = [
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50',
+            'location' => 'nullable|string',
+        ];
+
+        if (Schema::hasColumn('warehouses', 'type')) {
+            $rules['type'] = 'required|string|in:main,sub,unit';
+        }
+
+        $request->validate($rules);
+
+        $data = [
+            'name' => $request->name,
+            'code' => strtoupper($request->code),
+            'location' => $request->location,
+        ];
+
+        if (Schema::hasColumn('warehouses', 'type')) {
+            $data['type'] = $request->type;
+        }
+
+        $warehouse->update($data);
+
+        return redirect()->route('inventory.warehouses')->with('success', "Warehouse '{$warehouse->name}' updated successfully.");
     }
 
     public function destroyWarehouse(int $id)

@@ -7,8 +7,21 @@
     <!-- Header & Action Toolbar -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-xl font-bold text-white">Current Stock Balance</h2>
-            <p class="text-xs text-slate-400">Live physical stock levels, item valuations, and safety thresholds across all catalog items.</p>
+            <div class="flex items-center space-x-2 flex-wrap">
+                <h2 class="text-xl font-bold text-white">Current Stock Balance</h2>
+                @if($activeWarehouse)
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider {{ $activeWarehouse->type_badge_class }} flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span>Facility: {{ $activeWarehouse->name }} ({{ $activeWarehouse->code }})</span>
+                    </span>
+                @else
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 border border-slate-700 font-semibold flex items-center gap-1">
+                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>All Facilities (Global Overview)</span>
+                    </span>
+                @endif
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Live physical inventory levels, multi-warehouse allocations, and item valuations in Rs.</p>
         </div>
         <div class="flex items-center space-x-3">
             <a href="{{ route('stock.index') }}" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
@@ -24,7 +37,9 @@
             <div>
                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Units on Hand</p>
                 <h3 class="text-2xl font-bold text-white mt-1">{{ number_format($totalUnits) }}</h3>
-                <span class="text-[10px] text-slate-500 mt-0.5 block">Physical inventory count</span>
+                <span class="text-[10px] text-slate-500 mt-0.5 block">
+                    {{ $activeWarehouse ? $activeWarehouse->name : 'All Storage Facilities' }}
+                </span>
             </div>
             <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -67,14 +82,26 @@
 
     <!-- Filters & Search Toolbar -->
     <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl">
-        <form method="GET" action="{{ route('stock.balance') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <form method="GET" action="{{ route('stock.balance') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <!-- Search -->
             <div class="relative lg:col-span-2">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </span>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by SKU, item name, or description..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by SKU, name, or description..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
             </div>
+
+            <!-- Warehouse Facility Filter (Available to Admins / Non-scoped users) -->
+            @if(!Auth::user()->isWarehouseScoped())
+                <div>
+                    <select name="warehouse_id" onchange="this.form.submit()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                        <option value="">All Warehouses (Global)</option>
+                        @foreach($warehouses as $wh)
+                            <option value="{{ $wh->id }}" {{ request('warehouse_id') == $wh->id ? 'selected' : '' }}>[{{ $wh->type_label }}] {{ $wh->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
 
             <!-- Category Filter -->
             <div>
@@ -105,7 +132,7 @@
                     <option value="name_asc" {{ request('sort') === 'name_asc' ? 'selected' : '' }}>Item Name (A-Z)</option>
                     <option value="sku_asc" {{ request('sort') === 'sku_asc' ? 'selected' : '' }}>SKU (A-Z)</option>
                 </select>
-                @if(request()->hasAny(['search', 'category_id', 'stock_status', 'sort']))
+                @if(request()->hasAny(['search', 'warehouse_id', 'category_id', 'stock_status', 'sort']))
                     <a href="{{ route('stock.balance') }}" title="Reset Filters" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </a>
@@ -123,8 +150,14 @@
                         <th class="px-4 py-3.5">SKU & Item Name</th>
                         <th class="px-4 py-3.5">Category Hierarchy</th>
                         <th class="px-4 py-3.5">Unit Cost</th>
-                        <th class="px-4 py-3.5 text-right">Current Stock Balance</th>
-                        <th class="px-4 py-3.5 text-right">Reorder Threshold</th>
+                        <th class="px-4 py-3.5 text-right">
+                            @if($activeWarehouse)
+                                Balance in {{ $activeWarehouse->name }}
+                            @else
+                                Total Stock Balance
+                            @endif
+                        </th>
+                        <th class="px-4 py-3.5 text-right">Safety Threshold</th>
                         <th class="px-4 py-3.5 text-right">Total Valuation</th>
                         <th class="px-4 py-3.5 text-center">Health Status</th>
                     </tr>
@@ -132,9 +165,10 @@
                 <tbody class="divide-y divide-slate-800/60">
                     @forelse($items as $item)
                         @php
-                            $isDepleted = $item->current_stock <= 0;
-                            $isLow = $item->current_stock <= $item->reorder_level && !$isDepleted;
-                            $valuation = $item->current_stock * $item->unit_cost;
+                            $displayedStock = $activeWarehouseId ? (float)$item->stockInWarehouse($activeWarehouseId) : (float)$item->current_stock;
+                            $isDepleted = $displayedStock <= 0;
+                            $isLow = $displayedStock <= $item->reorder_level && !$isDepleted;
+                            $valuation = $displayedStock * $item->unit_cost;
                         @endphp
                         <tr class="hover:bg-slate-800/30 transition">
                             <!-- SKU & Name -->
@@ -143,6 +177,18 @@
                                 <div class="font-mono text-indigo-400 text-[11px]">{{ $item->sku }}</div>
                                 @if($item->description)
                                     <div class="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{{ $item->description }}</div>
+                                @endif
+                                
+                                @if(!$activeWarehouseId && $item->warehouseStocks->isNotEmpty())
+                                    <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
+                                        @foreach($item->warehouseStocks as $ws)
+                                            @if($ws->current_stock > 0 && $ws->warehouse)
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+                                                    {{ $ws->warehouse->code }}: <strong>{{ number_format($ws->current_stock) }}</strong>
+                                                </span>
+                                            @endif
+                                        @endforeach
+                                    </div>
                                 @endif
                             </td>
 
@@ -173,7 +219,7 @@
                             <!-- Current Stock Balance -->
                             <td class="px-4 py-4 text-right font-mono">
                                 <div class="text-base font-extrabold {{ $isDepleted ? 'text-rose-400' : ($isLow ? 'text-amber-400' : 'text-emerald-400') }}">
-                                    {{ number_format($item->current_stock) }} <span class="text-xs font-normal text-slate-400">{{ $item->unit }}</span>
+                                    {{ number_format($displayedStock) }} <span class="text-xs font-normal text-slate-400">{{ $item->unit }}</span>
                                 </div>
                             </td>
 
@@ -186,7 +232,7 @@
                             <!-- Total Valuation -->
                             <td class="px-4 py-4 text-right font-mono">
                                 <div class="font-bold text-white text-xs">Rs. {{ number_format($valuation, 2) }}</div>
-                                <div class="text-[10px] text-slate-500">{{ number_format($item->current_stock) }} &times; Rs. {{ number_format($item->unit_cost, 2) }}</div>
+                                <div class="text-[10px] text-slate-500">{{ number_format($displayedStock) }} &times; Rs. {{ number_format($item->unit_cost, 2) }}</div>
                             </td>
 
                             <!-- Health Status Badge -->

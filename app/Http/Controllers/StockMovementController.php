@@ -28,22 +28,31 @@ class StockMovementController extends Controller
 
     public function index()
     {
-        $movements = StockMovement::with(['items.item', 'item', 'warehouse', 'targetWarehouse', 'creator', 'workflowDefinition'])
-            ->latest()
-            ->get();
+        $user = Auth::user();
+        $movementsQuery = StockMovement::with(['items.item', 'item', 'warehouse', 'targetWarehouse', 'creator', 'workflowDefinition'])
+            ->latest();
+
+        if ($user->isWarehouseScoped()) {
+            $movementsQuery->where(function ($q) use ($user) {
+                $q->where('warehouse_id', $user->warehouse_id)
+                  ->orWhere('target_warehouse_id', $user->warehouse_id);
+            });
+        }
+
+        $movements = $movementsQuery->get();
         $items = InventoryItem::all();
-        $warehouses = Warehouse::all();
+        $warehouses = Warehouse::where('organization_id', $user->organization_id)->orderBy('type')->orderBy('name')->get();
 
         // Get default workflow definition
-        $workflow = $this->workflowService->getActiveWorkflow('StockMovement', Auth::user()->organization_id)
-            ?? $this->workflowService->getActiveWorkflow('StockDispatch', Auth::user()->organization_id)
-            ?? $this->workflowService->getActiveWorkflow('StockReceipt', Auth::user()->organization_id);
+        $workflow = $this->workflowService->getActiveWorkflow('StockMovement', $user->organization_id, $user->warehouse_id)
+            ?? $this->workflowService->getActiveWorkflow('StockDispatch', $user->organization_id, $user->warehouse_id)
+            ?? $this->workflowService->getActiveWorkflow('StockReceipt', $user->organization_id, $user->warehouse_id);
 
         $availableTransitionsMap = [];
         $stateDetailsMap = [];
 
         // Build state details across all active workflows for this org
-        $allWorkflows = \App\Models\WorkflowDefinition::where('organization_id', Auth::user()->organization_id)
+        $allWorkflows = \App\Models\WorkflowDefinition::where('organization_id', $user->organization_id)
             ->where('is_active', true)
             ->with('states')
             ->get();
@@ -55,7 +64,7 @@ class StockMovementController extends Controller
         }
 
         foreach ($movements as $m) {
-            $availableTransitionsMap[$m->id] = $this->workflowService->getAvailableTransitions($m, Auth::user());
+            $availableTransitionsMap[$m->id] = $this->workflowService->getAvailableTransitions($m, $user);
         }
 
         return view('stock.index', compact('movements', 'items', 'warehouses', 'workflow', 'availableTransitionsMap', 'stateDetailsMap'));
@@ -232,11 +241,28 @@ class StockMovementController extends Controller
     }
 
     /**
-     * View Current Stock Balance across all items with metrics & filters.
+     * View Current Stock Balance across items and warehouses with metrics & filters.
      */
     public function stockBalance(Request $request)
     {
-        $query = InventoryItem::with(['category1', 'category2', 'category3', 'category4']);
+        $user = Auth::user();
+        $activeWarehouseId = null;
+
+        // If user is assigned to a specific warehouse, scope to it
+        if ($user->isWarehouseScoped()) {
+            $activeWarehouseId = $user->warehouse_id;
+        } elseif ($request->filled('warehouse_id')) {
+            $activeWarehouseId = (int) $request->warehouse_id;
+        }
+
+        $activeWarehouse = $activeWarehouseId ? Warehouse::find($activeWarehouseId) : null;
+        $warehouses = Warehouse::where('organization_id', $user->organization_id)->orderBy('name')->get();
+
+        $withRelations = ['category1', 'category2', 'category3', 'category4'];
+        if (\Illuminate\Support\Facades\Schema::hasTable('warehouse_stocks')) {
+            $withRelations[] = 'warehouseStocks';
+        }
+        $query = InventoryItem::with($withRelations);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -251,14 +277,37 @@ class StockMovementController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        if ($request->filled('stock_status')) {
-            if ($request->stock_status === 'in_stock') {
-                $query->where('current_stock', '>', 0);
-            } elseif ($request->stock_status === 'low_stock') {
-                $query->whereColumn('current_stock', '<=', 'reorder_level')
-                      ->where('current_stock', '>', 0);
-            } elseif ($request->stock_status === 'out_of_stock') {
-                $query->where('current_stock', '<=', 0);
+        // Apply warehouse-specific filtering if active
+        if ($activeWarehouseId) {
+            if ($request->filled('stock_status')) {
+                if ($request->stock_status === 'in_stock') {
+                    $query->whereHas('warehouseStocks', function ($q) use ($activeWarehouseId) {
+                        $q->where('warehouse_id', $activeWarehouseId)->where('current_stock', '>', 0);
+                    });
+                } elseif ($request->stock_status === 'low_stock') {
+                    $query->whereHas('warehouseStocks', function ($q) use ($activeWarehouseId) {
+                        $q->where('warehouse_id', $activeWarehouseId)
+                          ->where('current_stock', '>', 0)
+                          ->whereColumn('current_stock', '<=', 'reorder_level');
+                    });
+                } elseif ($request->stock_status === 'out_of_stock') {
+                    $query->where(function ($q) use ($activeWarehouseId) {
+                        $q->whereDoesntHave('warehouseStocks', function ($sub) use ($activeWarehouseId) {
+                            $sub->where('warehouse_id', $activeWarehouseId)->where('current_stock', '>', 0);
+                        });
+                    });
+                }
+            }
+        } else {
+            if ($request->filled('stock_status')) {
+                if ($request->stock_status === 'in_stock') {
+                    $query->where('current_stock', '>', 0);
+                } elseif ($request->stock_status === 'low_stock') {
+                    $query->whereColumn('current_stock', '<=', 'reorder_level')
+                          ->where('current_stock', '>', 0);
+                } elseif ($request->stock_status === 'out_of_stock') {
+                    $query->where('current_stock', '<=', 0);
+                }
             }
         }
 
@@ -274,13 +323,35 @@ class StockMovementController extends Controller
 
         $items = $query->paginate(15)->withQueryString();
 
-        // Calculate summary KPI stats for current tenant
-        $allItems = InventoryItem::all();
-        $totalUnits = $allItems->sum('current_stock');
-        $totalValuation = $allItems->sum(fn($i) => $i->current_stock * $i->unit_cost);
-        $inStockCount = $allItems->where('current_stock', '>', 0)->count();
-        $lowStockCount = $allItems->filter(fn($i) => $i->current_stock <= $i->reorder_level && $i->current_stock > 0)->count();
-        $outOfStockCount = $allItems->where('current_stock', '<=', 0)->count();
+        // Calculate summary KPI stats
+        $allItems = InventoryItem::with('warehouseStocks')->get();
+        if ($activeWarehouseId) {
+            $totalUnits = 0;
+            $totalValuation = 0;
+            $inStockCount = 0;
+            $lowStockCount = 0;
+            $outOfStockCount = 0;
+
+            foreach ($allItems as $item) {
+                $whStock = (float) $item->stockInWarehouse($activeWarehouseId);
+                $totalUnits += $whStock;
+                $totalValuation += ($whStock * $item->unit_cost);
+
+                if ($whStock > $item->reorder_level) {
+                    $inStockCount++;
+                } elseif ($whStock > 0 && $whStock <= $item->reorder_level) {
+                    $lowStockCount++;
+                } else {
+                    $outOfStockCount++;
+                }
+            }
+        } else {
+            $totalUnits = $allItems->sum('current_stock');
+            $totalValuation = $allItems->sum(fn($i) => $i->current_stock * $i->unit_cost);
+            $inStockCount = $allItems->where('current_stock', '>', 0)->count();
+            $lowStockCount = $allItems->filter(fn($i) => $i->current_stock <= $i->reorder_level && $i->current_stock > 0)->count();
+            $outOfStockCount = $allItems->where('current_stock', '<=', 0)->count();
+        }
 
         $categories = \App\Models\Category::category1()->orderBy('name')->get();
 
@@ -291,7 +362,10 @@ class StockMovementController extends Controller
             'inStockCount',
             'lowStockCount',
             'outOfStockCount',
-            'categories'
+            'categories',
+            'warehouses',
+            'activeWarehouse',
+            'activeWarehouseId'
         ));
     }
 }

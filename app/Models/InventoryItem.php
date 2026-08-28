@@ -68,6 +68,24 @@ class InventoryItem extends Model
         return $this->hasMany(PurchaseOrderItem::class);
     }
 
+    public function warehouseStocks(): HasMany
+    {
+        return $this->hasMany(WarehouseStock::class);
+    }
+
+    public function stockInWarehouse(?int $warehouseId): float
+    {
+        if (!$warehouseId || !\Illuminate\Support\Facades\Schema::hasTable('warehouse_stocks')) {
+            return (float) $this->current_stock;
+        }
+
+        $stock = $this->relationLoaded('warehouseStocks')
+            ? $this->warehouseStocks->firstWhere('warehouse_id', $warehouseId)
+            : $this->warehouseStocks()->where('warehouse_id', $warehouseId)->first();
+
+        return (float) ($stock?->current_stock ?? 0);
+    }
+
     /**
      * Check if this item has been used anywhere in stock or transactions.
      */
