@@ -24,12 +24,45 @@
                 <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
 
-            <select name="category_id" onchange="this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
-                <option value="">All Category 1</option>
-                @foreach($category1List as $cat)
-                    <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
-                @endforeach
-            </select>
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Category 1 Filter -->
+                <select name="category_id" id="filter_cat_1" onchange="cascadeCategories('filter', 1, this.value); this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white">
+                    <option value="">All Category 1</option>
+                    @foreach($category1List as $cat)
+                        <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                    @endforeach
+                </select>
+
+                <!-- Category 2 Filter -->
+                <select name="category_2_id" id="filter_cat_2" onchange="cascadeCategories('filter', 2, this.value); this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white">
+                    <option value="">All Category 2</option>
+                    @foreach($category2List as $cat)
+                        @if(!request('category_id') || $cat->parent_id == request('category_id'))
+                            <option value="{{ $cat->id }}" {{ request('category_2_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                        @endif
+                    @endforeach
+                </select>
+
+                <!-- Category 3 Filter -->
+                <select name="category_3_id" id="filter_cat_3" onchange="cascadeCategories('filter', 3, this.value); this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white">
+                    <option value="">All Category 3</option>
+                    @foreach($category3List as $cat)
+                        @if(!request('category_2_id') || $cat->parent_id == request('category_2_id'))
+                            <option value="{{ $cat->id }}" {{ request('category_3_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                        @endif
+                    @endforeach
+                </select>
+
+                <!-- Category 4 Filter -->
+                <select name="category_4_id" id="filter_cat_4" onchange="this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white">
+                    <option value="">All Category 4</option>
+                    @foreach($category4List as $cat)
+                        @if(!request('category_3_id') || $cat->parent_id == request('category_3_id'))
+                            <option value="{{ $cat->id }}" {{ request('category_4_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
 
             <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
                 <input type="checkbox" name="low_stock" value="1" onchange="this.form.submit()" {{ request('low_stock') ? 'checked' : '' }} class="rounded bg-slate-950 border-slate-800 text-indigo-600">
@@ -37,7 +70,7 @@
             </label>
 
             <button type="submit" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold hover:bg-slate-700">Filter</button>
-            @if(request()->hasAny(['search', 'category_id', 'low_stock']))
+            @if(request()->hasAny(['search', 'category_id', 'category_2_id', 'category_3_id', 'category_4_id', 'low_stock']))
                 <a href="{{ route('inventory.items') }}" class="text-xs text-slate-500 hover:text-slate-300 underline">Reset</a>
             @endif
         </form>
@@ -324,48 +357,59 @@
 
     function cascadeCategories(prefix, changedLevel, selectedParentId) {
         selectedParentId = parseInt(selectedParentId);
+        const isFilter = (prefix === 'filter');
+
+        const cat2Default = isFilter ? 'All Category 2' : '-- None / Select Category 2 --';
+        const cat3Default = isFilter ? 'All Category 3' : '-- None / Select Category 3 --';
+        const cat4Default = isFilter ? 'All Category 4' : '-- None / Select Category 4 --';
+        const emptyDefault = isFilter ? 'All Categories' : '-- None --';
 
         if (changedLevel === 1) {
             const cat2Select = document.getElementById(`${prefix}_cat_2`);
             const cat3Select = document.getElementById(`${prefix}_cat_3`);
             const cat4Select = document.getElementById(`${prefix}_cat_4`);
 
-            cat2Select.innerHTML = '<option value="">-- None / Select Category 2 --</option>';
-            cat3Select.innerHTML = '<option value="">-- None --</option>';
-            cat4Select.innerHTML = '<option value="">-- None --</option>';
+            if (cat2Select) cat2Select.innerHTML = `<option value="">${cat2Default}</option>`;
+            if (cat3Select) cat3Select.innerHTML = `<option value="">${cat3Default}</option>`;
+            if (cat4Select) cat4Select.innerHTML = `<option value="">${cat4Default}</option>`;
 
-            const filteredCat2 = allCat2.filter(c => c.parent_id === selectedParentId);
-            filteredCat2.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.id;
-                opt.textContent = c.name;
-                cat2Select.appendChild(opt);
-            });
+            if (cat2Select) {
+                const filteredCat2 = isNaN(selectedParentId) ? allCat2 : allCat2.filter(c => c.parent_id === selectedParentId);
+                filteredCat2.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    cat2Select.appendChild(opt);
+                });
+            }
         } else if (changedLevel === 2) {
             const cat3Select = document.getElementById(`${prefix}_cat_3`);
             const cat4Select = document.getElementById(`${prefix}_cat_4`);
 
-            cat3Select.innerHTML = '<option value="">-- None / Select Category 3 --</option>';
-            cat4Select.innerHTML = '<option value="">-- None --</option>';
+            if (cat3Select) cat3Select.innerHTML = `<option value="">${cat3Default}</option>`;
+            if (cat4Select) cat4Select.innerHTML = `<option value="">${cat4Default}</option>`;
 
-            const filteredCat3 = allCat3.filter(c => c.parent_id === selectedParentId);
-            filteredCat3.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.id;
-                opt.textContent = c.name;
-                cat3Select.appendChild(opt);
-            });
+            if (cat3Select) {
+                const filteredCat3 = isNaN(selectedParentId) ? allCat3 : allCat3.filter(c => c.parent_id === selectedParentId);
+                filteredCat3.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    cat3Select.appendChild(opt);
+                });
+            }
         } else if (changedLevel === 3) {
             const cat4Select = document.getElementById(`${prefix}_cat_4`);
-            cat4Select.innerHTML = '<option value="">-- None / Select Category 4 --</option>';
-
-            const filteredCat4 = allCat4.filter(c => c.parent_id === selectedParentId);
-            filteredCat4.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.id;
-                opt.textContent = c.name;
-                cat4Select.appendChild(opt);
-            });
+            if (cat4Select) {
+                cat4Select.innerHTML = `<option value="">${cat4Default}</option>`;
+                const filteredCat4 = isNaN(selectedParentId) ? allCat4 : allCat4.filter(c => c.parent_id === selectedParentId);
+                filteredCat4.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    cat4Select.appendChild(opt);
+                });
+            }
         }
     }
 

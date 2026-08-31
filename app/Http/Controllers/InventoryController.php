@@ -24,6 +24,18 @@ class InventoryController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
+        if ($request->filled('category_2_id')) {
+            $query->where('category_2_id', $request->category_2_id);
+        }
+
+        if ($request->filled('category_3_id')) {
+            $query->where('category_3_id', $request->category_3_id);
+        }
+
+        if ($request->filled('category_4_id')) {
+            $query->where('category_4_id', $request->category_4_id);
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
