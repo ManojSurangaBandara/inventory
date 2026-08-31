@@ -29,6 +29,29 @@ class AppServiceProvider extends ServiceProvider
                 });
             }
 
+            // Ensure warehouse_types table exists
+            if (Schema::hasTable('organizations') && !Schema::hasTable('warehouse_types')) {
+                Schema::create('warehouse_types', function (Blueprint $table) {
+                    $table->id();
+                    $table->foreignId('organization_id')->constrained('organizations')->onDelete('cascade');
+                    $table->string('name');
+                    $table->string('code');
+                    $table->string('color')->default('emerald');
+                    $table->string('description')->nullable();
+                    $table->boolean('is_default')->default(false);
+                    $table->timestamps();
+
+                    $table->unique(['organization_id', 'code']);
+                });
+            }
+
+            // Ensure warehouses.warehouse_type_id exists
+            if (Schema::hasTable('warehouses') && Schema::hasTable('warehouse_types') && !Schema::hasColumn('warehouses', 'warehouse_type_id')) {
+                Schema::table('warehouses', function (Blueprint $table) {
+                    $table->foreignId('warehouse_type_id')->nullable()->after('type')->constrained('warehouse_types')->onDelete('set null');
+                });
+            }
+
             // Ensure users.warehouse_id exists
             if (Schema::hasTable('users') && !Schema::hasColumn('users', 'warehouse_id')) {
                 Schema::table('users', function (Blueprint $table) {

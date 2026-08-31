@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Warehouse extends Model
@@ -13,11 +14,17 @@ class Warehouse extends Model
 
     protected $fillable = [
         'organization_id',
+        'warehouse_type_id',
         'name',
         'code',
-        'type', // main, sub, unit
+        'type', // legacy string fallback: main, sub, unit
         'location',
     ];
+
+    public function warehouseType(): BelongsTo
+    {
+        return $this->belongsTo(WarehouseType::class, 'warehouse_type_id');
+    }
 
     public function purchaseOrders(): HasMany
     {
@@ -41,8 +48,16 @@ class Warehouse extends Model
 
     public function getTypeLabelAttribute(): string
     {
+        if ($this->relationLoaded('warehouseType') && $this->warehouseType) {
+            return $this->warehouseType->name;
+        }
+
+        if ($this->warehouse_type_id && $this->warehouseType) {
+            return $this->warehouseType->name;
+        }
+
         $type = $this->attributes['type'] ?? 'main';
-        return match ($type) {
+        return match (strtolower($type)) {
             'main' => 'Main Warehouse (Central)',
             'sub' => 'Sub Warehouse (Regional)',
             'unit' => 'Unit Warehouse (Workshop/Field)',
@@ -52,8 +67,16 @@ class Warehouse extends Model
 
     public function getTypeBadgeClassAttribute(): string
     {
+        if ($this->relationLoaded('warehouseType') && $this->warehouseType) {
+            return $this->warehouseType->badge_class;
+        }
+
+        if ($this->warehouse_type_id && $this->warehouseType) {
+            return $this->warehouseType->badge_class;
+        }
+
         $type = $this->attributes['type'] ?? 'main';
-        return match ($type) {
+        return match (strtolower($type)) {
             'main' => 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
             'sub' => 'bg-blue-500/10 text-blue-400 border-blue-500/30',
             'unit' => 'bg-amber-500/10 text-amber-400 border-amber-500/30',

@@ -145,11 +145,6 @@
                 <p class="text-[10px] text-slate-400 mt-1">Assign to a specific warehouse to scope stock balance and requests to this depot.</p>
             </div>
 
-            <div class="flex items-center space-x-2 pt-1">
-                <input type="checkbox" name="is_org_admin" id="is_org_admin_check" value="1" class="rounded bg-slate-950 border-slate-800 text-indigo-600 focus:ring-indigo-500">
-                <label for="is_org_admin_check" class="text-xs text-slate-300">Grant Organization Admin Rights</label>
-            </div>
-
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-2">Assign Organization Roles</label>
                 <div class="space-y-2 max-h-40 overflow-y-auto p-2 bg-slate-950 border border-slate-800 rounded-xl">
