@@ -217,11 +217,6 @@
                 </select>
             </div>
 
-            <div class="flex items-center space-x-2">
-                <input type="checkbox" name="is_org_admin" id="edit_is_org_admin" value="1" class="rounded bg-slate-950 border-slate-800 text-indigo-600 focus:ring-indigo-500">
-                <label for="edit_is_org_admin" class="text-xs text-slate-300">Grant Org Admin Privileges</label>
-            </div>
-
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-2">Assigned Organization Roles</label>
                 <div class="space-y-2 max-h-40 overflow-y-auto p-2 bg-slate-950 border border-slate-800 rounded-xl">
@@ -249,7 +244,6 @@
         document.getElementById('edit_email').value = user.email;
         document.getElementById('edit_status').value = user.status;
         document.getElementById('edit_warehouse_id').value = (user.warehouse_id !== null && user.warehouse_id !== undefined) ? user.warehouse_id.toString() : '';
-        document.getElementById('edit_is_org_admin').checked = user.is_org_admin == 1;
 
         // Uncheck all roles first
         document.querySelectorAll('.edit-role-checkbox').forEach(cb => cb.checked = false);

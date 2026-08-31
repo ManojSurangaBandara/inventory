@@ -78,7 +78,9 @@ class OrgAdminController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->status = $request->status;
-        $user->is_org_admin = $request->boolean('is_org_admin');
+        if ($request->has('is_org_admin')) {
+            $user->is_org_admin = $request->boolean('is_org_admin');
+        }
         $user->warehouse_id = $request->filled('warehouse_id') ? (int) $request->warehouse_id : null;
 
         if ($request->filled('password')) {
