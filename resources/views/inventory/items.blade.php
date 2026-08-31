@@ -26,7 +26,7 @@
 
             <div class="flex flex-wrap items-center gap-2">
                 <!-- Category 1 Filter -->
-                <select name="category_id" id="filter_cat_1" onchange="cascadeCategories('filter', 1, this.value); this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white">
+                <select name="category_id" id="filter_cat_1" onchange="cascadeCategories('filter', 1, this.value); this.form.submit()" class="w-36 sm:w-40 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white truncate">
                     <option value="">All Category 1</option>
                     @foreach($category1List as $cat)
                         <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
@@ -34,7 +34,7 @@
                 </select>
 
                 <!-- Category 2 Filter -->
-                <select name="category_2_id" id="filter_cat_2" onchange="cascadeCategories('filter', 2, this.value); this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white">
+                <select name="category_2_id" id="filter_cat_2" onchange="cascadeCategories('filter', 2, this.value); this.form.submit()" class="w-36 sm:w-40 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white truncate">
                     <option value="">All Category 2</option>
                     @foreach($category2List as $cat)
                         @if(!request('category_id') || $cat->parent_id == request('category_id'))
@@ -44,7 +44,7 @@
                 </select>
 
                 <!-- Category 3 Filter -->
-                <select name="category_3_id" id="filter_cat_3" onchange="cascadeCategories('filter', 3, this.value); this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white">
+                <select name="category_3_id" id="filter_cat_3" onchange="cascadeCategories('filter', 3, this.value); this.form.submit()" class="w-36 sm:w-40 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white truncate">
                     <option value="">All Category 3</option>
                     @foreach($category3List as $cat)
                         @if(!request('category_2_id') || $cat->parent_id == request('category_2_id'))
@@ -54,7 +54,7 @@
                 </select>
 
                 <!-- Category 4 Filter -->
-                <select name="category_4_id" id="filter_cat_4" onchange="this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white">
+                <select name="category_4_id" id="filter_cat_4" onchange="this.form.submit()" class="w-36 sm:w-40 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white truncate">
                     <option value="">All Category 4</option>
                     @foreach($category4List as $cat)
                         @if(!request('category_3_id') || $cat->parent_id == request('category_3_id'))
