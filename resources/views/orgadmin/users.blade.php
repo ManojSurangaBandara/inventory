@@ -147,9 +147,9 @@
 
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-2">Assign Organization Roles</label>
-                <div class="space-y-2 max-h-40 overflow-y-auto p-2 bg-slate-950 border border-slate-800 rounded-xl">
+                <div class="space-y-1.5 max-h-40 overflow-y-auto p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl">
                     @forelse($roles as $role)
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 hover:bg-slate-900 p-1 rounded cursor-pointer">
+                        <label class="flex items-center space-x-2.5 text-xs text-slate-300 hover:bg-slate-800/50 p-1.5 rounded-lg cursor-pointer transition">
                             <input type="checkbox" name="roles[]" value="{{ $role->id }}" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
                             <div>
                                 <span class="font-semibold text-white block">{{ $role->name }}</span>
@@ -219,9 +219,9 @@
 
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-2">Assigned Organization Roles</label>
-                <div class="space-y-2 max-h-40 overflow-y-auto p-2 bg-slate-950 border border-slate-800 rounded-xl">
+                <div class="space-y-1.5 max-h-40 overflow-y-auto p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl">
                     @foreach($roles as $role)
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 hover:bg-slate-900 p-1 rounded cursor-pointer">
+                        <label class="flex items-center space-x-2.5 text-xs text-slate-300 hover:bg-slate-800/50 p-1.5 rounded-lg cursor-pointer transition">
                             <input type="checkbox" name="roles[]" value="{{ $role->id }}" id="edit_role_{{ $role->id }}" class="edit-role-checkbox rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
                             <span class="font-semibold text-white">{{ $role->name }}</span>
                         </label>

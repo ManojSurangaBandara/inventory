@@ -224,23 +224,23 @@
         <!-- Existing Types List -->
         <div class="space-y-3">
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Configured Types ({{ $warehouseTypes->count() }})</h4>
-            <div class="divide-y divide-slate-800/80 border border-slate-800 rounded-2xl overflow-hidden bg-slate-950/50">
+            <div class="divide-y divide-slate-800/80 border border-slate-800 rounded-2xl overflow-hidden bg-slate-950/40">
                 @forelse($warehouseTypes as $wt)
                     @php
                         $linkedCount = $wt->warehouses()->count();
                     @endphp
-                    <div class="p-3.5 flex items-center justify-between hover:bg-slate-900/50 transition">
+                    <div class="p-3.5 flex items-center justify-between hover:bg-slate-800/30 transition">
                         <div class="flex items-center space-x-3">
                             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider {{ $wt->badge_class }}">
                                 {{ $wt->name }}
                             </span>
                             <div>
                                 <div class="flex items-center space-x-2">
-                                    <span class="font-mono text-xs text-indigo-400 font-semibold">{{ $wt->code }}</span>
-                                    <span class="text-[11px] text-slate-400">• {{ $linkedCount }} linked {{ Str::plural('facility', $linkedCount) }}</span>
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">{{ $wt->code }}</span>
+                                    <span class="text-xs text-slate-300 font-medium">• {{ $linkedCount }} linked {{ Str::plural('facility', $linkedCount) }}</span>
                                 </div>
                                 @if($wt->description)
-                                    <p class="text-[10px] text-slate-400 mt-0.5">{{ $wt->description }}</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">{{ $wt->description }}</p>
                                 @endif
                             </div>
                         </div>
