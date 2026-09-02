@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class WarehouseType extends Model
 {
@@ -45,6 +46,31 @@ class WarehouseType extends Model
             'indigo' => 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
             default => 'bg-slate-500/10 text-slate-400 border-slate-500/30',
         };
+    }
+
+    /**
+     * Automatically generate unique uppercase code from name.
+     */
+    public static function generateUniqueCode(int $organizationId, string $name, ?int $ignoreId = null): string
+    {
+        $baseCode = strtoupper(preg_replace('/[^A-Za-z0-9]/', '_', trim($name)));
+        $baseCode = trim($baseCode, '_');
+        if (empty($baseCode)) {
+            $baseCode = 'TYPE';
+        }
+        $baseCode = substr($baseCode, 0, 30);
+        $code = $baseCode;
+        $counter = 1;
+
+        while (static::where('organization_id', $organizationId)
+            ->where('code', $code)
+            ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
+            ->exists()) {
+            $counter++;
+            $code = substr($baseCode, 0, 25) . '_' . $counter;
+        }
+
+        return $code;
     }
 
     /**

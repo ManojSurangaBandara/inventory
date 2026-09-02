@@ -630,10 +630,11 @@
                         <span>Items</span>
                     </a>
 
-                    <div class="grid grid-cols-3 gap-1 px-1 pt-1">
+                    <div class="grid grid-cols-2 gap-1 px-1 pt-1">
                         <a href="{{ route('inventory.categories') }}" class="text-center py-1.5 rounded-lg text-[10px] font-medium text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800 {{ request()->routeIs('inventory.categories*') ? 'border-indigo-500/50 text-indigo-300' : '' }}">Categories</a>
                         <a href="{{ route('inventory.suppliers') }}" class="text-center py-1.5 rounded-lg text-[10px] font-medium text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800 {{ request()->routeIs('inventory.suppliers*') ? 'border-indigo-500/50 text-indigo-300' : '' }}">Suppliers</a>
                         <a href="{{ route('inventory.warehouses') }}" class="text-center py-1.5 rounded-lg text-[10px] font-medium text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800 {{ request()->routeIs('inventory.warehouses*') ? 'border-indigo-500/50 text-indigo-300' : '' }}">Warehouses</a>
+                        <a href="{{ route('inventory.warehouse-types') }}" class="text-center py-1.5 rounded-lg text-[10px] font-medium text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800 {{ request()->routeIs('inventory.warehouse-types*') ? 'border-indigo-500/50 text-indigo-300' : '' }}">Warehouse Types</a>
                     </div>
                 @endif
 

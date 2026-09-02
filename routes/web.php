@@ -120,7 +120,8 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
         Route::put('/warehouses/{id}', [InventoryController::class, 'updateWarehouse'])->name('warehouses.update');
         Route::delete('/warehouses/{id}', [InventoryController::class, 'destroyWarehouse'])->name('warehouses.destroy');
 
-        // Warehouse Types Configuration Routes
+        // Master Data: Warehouse Types
+        Route::get('/warehouse-types', [InventoryController::class, 'warehouseTypes'])->name('warehouse-types');
         Route::post('/warehouse-types', [InventoryController::class, 'storeWarehouseType'])->name('warehouse-types.store');
         Route::put('/warehouse-types/{id}', [InventoryController::class, 'updateWarehouseType'])->name('warehouse-types.update');
         Route::delete('/warehouse-types/{id}', [InventoryController::class, 'destroyWarehouseType'])->name('warehouse-types.destroy');

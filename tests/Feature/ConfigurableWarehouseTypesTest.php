@@ -13,7 +13,7 @@ class ConfigurableWarehouseTypesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_configurable_warehouse_types_lifecycle_and_warehouse_linking(): void
+    public function test_configurable_warehouse_types_master_data_lifecycle_and_warehouse_linking(): void
     {
         $org = Organization::create(['name' => 'Apex Logistics', 'code' => 'APEX', 'status' => 'active']);
 
@@ -27,9 +27,10 @@ class ConfigurableWarehouseTypesTest extends TestCase
 
         $this->actingAs($admin);
 
-        // 1. Visit warehouses page - triggers ensureDefaults
-        $res = $this->get(route('inventory.warehouses'));
+        // 1. Visit warehouse types master data page - triggers ensureDefaults
+        $res = $this->get(route('inventory.warehouse-types'));
         $res->assertStatus(200);
+        $res->assertSee('Warehouse Types');
 
         // Check defaults were seeded
         $types = WarehouseType::where('organization_id', $org->id)->get();
@@ -38,21 +39,17 @@ class ConfigurableWarehouseTypesTest extends TestCase
         $this->assertTrue($types->contains('code', 'SUB'));
         $this->assertTrue($types->contains('code', 'UNIT'));
 
-        // 2. Create custom warehouse type (Cold Storage Depot)
+        // 2. Create custom warehouse type taking ONLY name
         $createTypeRes = $this->post(route('inventory.warehouse-types.store'), [
             'name' => 'Cold Storage Facility',
-            'code' => 'COLD',
-            'color' => 'cyan',
-            'description' => 'Refrigerated vaccine and perishables depot',
         ]);
-        $createTypeRes->assertRedirect(route('inventory.warehouses'));
+        $createTypeRes->assertSessionHas('success');
 
-        $coldType = WarehouseType::where('organization_id', $org->id)->where('code', 'COLD')->first();
+        $coldType = WarehouseType::where('organization_id', $org->id)->where('name', 'Cold Storage Facility')->first();
         $this->assertNotNull($coldType);
-        $this->assertEquals('Cold Storage Facility', $coldType->name);
-        $this->assertStringContainsString('cyan', $coldType->badge_class);
+        $this->assertEquals('COLD_STORAGE_FACILITY', $coldType->code);
 
-        // 3. Create a warehouse assigned to the custom warehouse type
+        // 3. Create a warehouse assigned to the custom warehouse type (warehouse_type_id required)
         $createWHRes = $this->post(route('inventory.warehouses.store'), [
             'name' => 'Colombo Cold Hub #1',
             'code' => 'WH-COLD-01',
@@ -65,49 +62,33 @@ class ConfigurableWarehouseTypesTest extends TestCase
         $this->assertNotNull($warehouse);
         $this->assertEquals($coldType->id, $warehouse->warehouse_type_id);
         $this->assertEquals('Cold Storage Facility', $warehouse->type_label);
-        $this->assertEquals($coldType->badge_class, $warehouse->type_badge_class);
 
-        // 4. Update the warehouse type name and color
+        // 4. Update the warehouse type taking ONLY name
         $updateTypeRes = $this->put(route('inventory.warehouse-types.update', $coldType->id), [
             'name' => 'Ultra-Low Temperature Depot',
-            'code' => 'COLD-ULT',
-            'color' => 'indigo',
-            'description' => 'Deep freeze storage',
         ]);
-        $updateTypeRes->assertRedirect(route('inventory.warehouses'));
+        $updateTypeRes->assertSessionHas('success');
+
+        $coldType->refresh();
+        $this->assertEquals('Ultra-Low Temperature Depot', $coldType->name);
+        $this->assertEquals('ULTRA_LOW_TEMPERATURE_DEPOT', $coldType->code);
 
         $warehouse->refresh();
         $this->assertEquals('Ultra-Low Temperature Depot', $warehouse->type_label);
-        $this->assertStringContainsString('indigo', $warehouse->type_badge_class);
 
         // 5. Attempting to delete a warehouse type with linked warehouses should be blocked
         $deleteBlockedRes = $this->delete(route('inventory.warehouse-types.destroy', $coldType->id));
-        $deleteBlockedRes->assertRedirect(route('inventory.warehouses'));
+        $deleteBlockedRes->assertSessionHas('error');
         $this->assertDatabaseHas('warehouse_types', ['id' => $coldType->id]);
 
-        // 6. Assign user to this warehouse with custom type
-        $clerk = User::create([
-            'name' => 'Cold Facility Clerk',
-            'email' => 'coldclerk@apexlogistics.com',
-            'password' => bcrypt('password'),
+        // 6. Delete an unused warehouse type -> succeeds
+        $unusedType = WarehouseType::create([
             'organization_id' => $org->id,
-            'warehouse_id' => $warehouse->id,
-            'is_org_admin' => false,
+            'name' => 'Temporary Transit Staging',
+            'code' => 'TRANSIT',
         ]);
-
-        $this->assertEquals($warehouse->id, $clerk->warehouse_id);
-        $this->assertEquals('Ultra-Low Temperature Depot', $clerk->warehouse->type_label);
-
-        // 7. Delete an unlinked type (e.g. create a temporary type and delete it)
-        $tempType = WarehouseType::create([
-            'organization_id' => $org->id,
-            'name' => 'Temporary Storage Yard',
-            'code' => 'TEMP',
-            'color' => 'rose',
-        ]);
-
-        $deleteTempRes = $this->delete(route('inventory.warehouse-types.destroy', $tempType->id));
-        $deleteTempRes->assertRedirect(route('inventory.warehouses'));
-        $this->assertDatabaseMissing('warehouse_types', ['id' => $tempType->id]);
+        $deleteRes = $this->delete(route('inventory.warehouse-types.destroy', $unusedType->id));
+        $deleteRes->assertSessionHas('success');
+        $this->assertDatabaseMissing('warehouse_types', ['id' => $unusedType->id]);
     }
 }

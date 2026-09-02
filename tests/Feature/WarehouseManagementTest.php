@@ -26,11 +26,14 @@ class WarehouseManagementTest extends TestCase
         $admin = User::where('email', 'admin@apexlogistics.com')->first();
         $this->actingAs($admin);
 
+        $whType = \App\Models\WarehouseType::where('organization_id', $admin->organization_id)->first()
+            ?? \App\Models\WarehouseType::ensureDefaults($admin->organization_id)->first();
+
         // Create a new warehouse
         $storeRes = $this->post(route('inventory.warehouses.store'), [
             'name' => 'Mistaken Depot East',
             'code' => 'WH-MISTAKE-EAST',
-            'type' => 'sub',
+            'warehouse_type_id' => $whType->id,
             'location' => 'Block 9, East Yard',
         ]);
         $storeRes->assertRedirect(route('inventory.warehouses'));
