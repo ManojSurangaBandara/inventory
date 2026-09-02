@@ -255,8 +255,8 @@ class StockMovementController extends Controller
             $activeWarehouseId = (int) $request->warehouse_id;
         }
 
-        $activeWarehouse = $activeWarehouseId ? Warehouse::find($activeWarehouseId) : null;
-        $warehouses = Warehouse::where('organization_id', $user->organization_id)->orderBy('name')->get();
+        $activeWarehouse = $activeWarehouseId ? Warehouse::with('warehouseType')->find($activeWarehouseId) : null;
+        $warehouses = Warehouse::where('organization_id', $user->organization_id)->with('warehouseType')->orderBy('name')->get();
 
         $withRelations = ['category1', 'category2', 'category3', 'category4'];
         if (\Illuminate\Support\Facades\Schema::hasTable('warehouse_stocks')) {

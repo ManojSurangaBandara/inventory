@@ -25,11 +25,6 @@
             <p class="text-xs text-slate-300">Organization: <strong class="text-indigo-400">{{ Auth::user()->organization->name ?? 'Default Org' }}</strong></p>
         </div>
         <div class="flex items-center space-x-2.5">
-            <a href="{{ route('stock.transfers') }}" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5">
-                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                <span>Stock Transfer</span>
-            </a>
-
             <a href="{{ route('stock.index') }}" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5">
                 <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 <span>Stock Request</span>

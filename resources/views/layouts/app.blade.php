@@ -137,28 +137,32 @@
             background-color: #f1f5f9 !important;
         }
 
-        /* All Modal Windows */
-        html.light #addItemModal > div,
-        html.light #editItemModal > div,
-        html.light #transitionModal > div,
-        html.light #addMovementModal > div,
-        html.light #addCategoryModal > div,
-        html.light #editCategoryModal > div,
-        html.light #stateModal > div,
-        html.light #transitionModalDef > div,
-        html.light #addPoModal > div,
-        html.light #roleModal > div,
-        html.light #userModal > div,
-        html.light #tokenModal > div,
-        html.light #createOrgModal > div {
+        /* All Modal Windows - Universal Selector across the entire application */
+        html.light [id*="Modal"] > div,
+        html.light [id*="modal"] > div,
+        html.light .fixed.inset-0 > div {
             background-color: #ffffff !important;
             border-color: #e2e8f0 !important;
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+            color: #0f172a !important;
         }
 
         /* Modal backdrop overlay */
-        html.light .fixed.inset-0.bg-slate-950\/80 {
-            background-color: rgba(15, 23, 42, 0.6) !important;
+        html.light .fixed.inset-0[class*="bg-slate-950"],
+        html.light .fixed.inset-0.bg-slate-950\/80,
+        html.light .fixed.inset-0.bg-slate-950\/85 {
+            background-color: rgba(15, 23, 42, 0.65) !important;
+        }
+
+        /* Inner blocks & sub-panels inside Modals in Light Mode */
+        html.light .fixed.inset-0 [class*="bg-slate-950"],
+        html.light .fixed.inset-0 [class*="bg-slate-900"] {
+            background-color: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+        }
+        
+        html.light .fixed.inset-0 label:hover {
+            background-color: #f1f5f9 !important;
         }
 
         /* Form Inputs, Selects, and Textareas */

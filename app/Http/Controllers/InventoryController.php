@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\InventoryItem;
 use App\Models\Supplier;
 use App\Models\Warehouse;
+use App\Models\WarehouseType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -21,6 +22,18 @@ class InventoryController extends Controller
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('category_2_id')) {
+            $query->where('category_2_id', $request->category_2_id);
+        }
+
+        if ($request->filled('category_3_id')) {
+            $query->where('category_3_id', $request->category_3_id);
+        }
+
+        if ($request->filled('category_4_id')) {
+            $query->where('category_4_id', $request->category_4_id);
         }
 
         if ($request->filled('search')) {
@@ -256,7 +269,13 @@ class InventoryController extends Controller
      */
     public function warehouses()
     {
-        $warehousesQuery = Warehouse::where('organization_id', Auth::user()->organization_id)
+        $orgId = Auth::user()->organization_id;
+
+        // Ensure default baseline warehouse types exist
+        $warehouseTypes = WarehouseType::ensureDefaults($orgId);
+
+        $warehousesQuery = Warehouse::where('organization_id', $orgId)
+            ->with(['warehouseType'])
             ->withCount([
                 'stockMovements',
                 'purchaseOrders',
@@ -268,7 +287,7 @@ class InventoryController extends Controller
 
         $warehouses = $warehousesQuery->get();
 
-        return view('inventory.warehouses', compact('warehouses'));
+        return view('inventory.warehouses', compact('warehouses', 'warehouseTypes'));
     }
 
     public function storeWarehouse(Request $request)
@@ -276,27 +295,33 @@ class InventoryController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50',
+            'warehouse_type_id' => 'nullable|exists:warehouse_types,id',
+            'type' => 'nullable|string|max:50',
             'location' => 'nullable|string',
         ];
 
-        if (Schema::hasColumn('warehouses', 'type')) {
-            $rules['type'] = 'required|string|in:main,sub,unit';
-        }
-
         $request->validate($rules);
 
-        $data = [
-            'organization_id' => Auth::user()->organization_id,
-            'name' => $request->name,
-            'code' => strtoupper($request->code),
-            'location' => $request->location,
-        ];
+        $typeString = 'main';
+        $typeId = $request->warehouse_type_id ?: null;
 
-        if (Schema::hasColumn('warehouses', 'type')) {
-            $data['type'] = $request->type ?? 'main';
+        if ($typeId) {
+            $whType = WarehouseType::where('organization_id', Auth::user()->organization_id)->find($typeId);
+            if ($whType) {
+                $typeString = strtolower($whType->code);
+            }
+        } elseif ($request->filled('type')) {
+            $typeString = strtolower($request->type);
         }
 
-        Warehouse::create($data);
+        Warehouse::create([
+            'organization_id' => Auth::user()->organization_id,
+            'warehouse_type_id' => $typeId,
+            'name' => $request->name,
+            'code' => strtoupper($request->code),
+            'type' => $typeString,
+            'location' => $request->location,
+        ]);
 
         return redirect()->route('inventory.warehouses')->with('success', "Warehouse added successfully.");
     }
@@ -308,33 +333,39 @@ class InventoryController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50',
+            'warehouse_type_id' => 'nullable|exists:warehouse_types,id',
+            'type' => 'nullable|string|max:50',
             'location' => 'nullable|string',
         ];
 
-        if (Schema::hasColumn('warehouses', 'type')) {
-            $rules['type'] = 'required|string|in:main,sub,unit';
-        }
-
         $request->validate($rules);
 
-        $data = [
-            'name' => $request->name,
-            'code' => strtoupper($request->code),
-            'location' => $request->location,
-        ];
+        $typeString = $warehouse->type ?? 'main';
+        $typeId = $request->warehouse_type_id ?: null;
 
-        if (Schema::hasColumn('warehouses', 'type')) {
-            $data['type'] = $request->type;
+        if ($typeId) {
+            $whType = WarehouseType::where('organization_id', Auth::user()->organization_id)->find($typeId);
+            if ($whType) {
+                $typeString = strtolower($whType->code);
+            }
+        } elseif ($request->filled('type')) {
+            $typeString = strtolower($request->type);
         }
 
-        $warehouse->update($data);
+        $warehouse->update([
+            'name' => $request->name,
+            'code' => strtoupper($request->code),
+            'warehouse_type_id' => $typeId,
+            'type' => $typeString,
+            'location' => $request->location,
+        ]);
 
         return redirect()->route('inventory.warehouses')->with('success', "Warehouse '{$warehouse->name}' updated successfully.");
     }
 
     public function destroyWarehouse(int $id)
     {
-        $warehouse = Warehouse::findOrFail($id);
+        $warehouse = Warehouse::where('organization_id', Auth::user()->organization_id)->findOrFail($id);
 
         $originMovementsCount = $warehouse->stockMovements()->count();
         $targetMovementsCount = \App\Models\StockMovement::where('target_warehouse_id', $warehouse->id)->count();
@@ -358,5 +389,86 @@ class InventoryController extends Controller
         $warehouse->delete();
 
         return redirect()->route('inventory.warehouses')->with('success', "Warehouse '{$name}' deleted successfully.");
+    }
+
+    /**
+     * Warehouse Types CRUD
+     */
+    public function storeWarehouseType(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50',
+            'color' => 'required|string|in:emerald,blue,amber,purple,rose,cyan,indigo',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $code = strtoupper(trim($request->code));
+        $orgId = Auth::user()->organization_id;
+
+        $exists = WarehouseType::where('organization_id', $orgId)->where('code', $code)->exists();
+        if ($exists) {
+            return redirect()->route('inventory.warehouses')->with('error', "A warehouse type with code '{$code}' already exists.");
+        }
+
+        WarehouseType::create([
+            'organization_id' => $orgId,
+            'name' => $request->name,
+            'code' => $code,
+            'color' => $request->color,
+            'description' => $request->description,
+            'is_default' => false,
+        ]);
+
+        return redirect()->route('inventory.warehouses')->with('success', "Warehouse type '{$request->name}' created successfully.");
+    }
+
+    public function updateWarehouseType(Request $request, int $id)
+    {
+        $orgId = Auth::user()->organization_id;
+        $warehouseType = WarehouseType::where('organization_id', $orgId)->findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50',
+            'color' => 'required|string|in:emerald,blue,amber,purple,rose,cyan,indigo',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $code = strtoupper(trim($request->code));
+
+        $exists = WarehouseType::where('organization_id', $orgId)
+            ->where('code', $code)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($exists) {
+            return redirect()->route('inventory.warehouses')->with('error', "Another warehouse type with code '{$code}' already exists.");
+        }
+
+        $warehouseType->update([
+            'name' => $request->name,
+            'code' => $code,
+            'color' => $request->color,
+            'description' => $request->description,
+        ]);
+
+        return redirect()->route('inventory.warehouses')->with('success', "Warehouse type '{$warehouseType->name}' updated successfully.");
+    }
+
+    public function destroyWarehouseType(int $id)
+    {
+        $orgId = Auth::user()->organization_id;
+        $warehouseType = WarehouseType::where('organization_id', $orgId)->findOrFail($id);
+
+        $linkedCount = $warehouseType->warehouses()->count();
+        if ($linkedCount > 0) {
+            return redirect()->route('inventory.warehouses')->with('error', "Cannot delete warehouse type '{$warehouseType->name}': {$linkedCount} warehouse(s) are currently configured under this type.");
+        }
+
+        $name = $warehouseType->name;
+        $warehouseType->delete();
+
+        return redirect()->route('inventory.warehouses')->with('success', "Warehouse type '{$name}' deleted successfully.");
     }
 }

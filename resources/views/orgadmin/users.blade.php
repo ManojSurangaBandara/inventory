@@ -135,26 +135,21 @@
 
             <!-- Assigned Warehouse Location -->
             <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Facility / Warehouse Location</label>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Warehouse</label>
                 <select name="warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-medium">
-                    <option value="">-- All Facilities / Global Headquarters --</option>
+                    <option value="">-- All Warehouses (Global HQ) --</option>
                     @foreach($warehouses as $wh)
-                        <option value="{{ $wh->id }}">[{{ $wh->type_label }}] {{ $wh->name }} ({{ $wh->code }})</option>
+                        <option value="{{ $wh->id }}">{{ $wh->name }} ({{ $wh->code }})</option>
                     @endforeach
                 </select>
                 <p class="text-[10px] text-slate-400 mt-1">Assign to a specific warehouse to scope stock balance and requests to this depot.</p>
             </div>
 
-            <div class="flex items-center space-x-2 pt-1">
-                <input type="checkbox" name="is_org_admin" id="is_org_admin_check" value="1" class="rounded bg-slate-950 border-slate-800 text-indigo-600 focus:ring-indigo-500">
-                <label for="is_org_admin_check" class="text-xs text-slate-300">Grant Organization Admin Rights</label>
-            </div>
-
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-2">Assign Organization Roles</label>
-                <div class="space-y-2 max-h-40 overflow-y-auto p-2 bg-slate-950 border border-slate-800 rounded-xl">
+                <div class="space-y-1.5 max-h-40 overflow-y-auto p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl">
                     @forelse($roles as $role)
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 hover:bg-slate-900 p-1 rounded cursor-pointer">
+                        <label class="flex items-center space-x-2.5 text-xs text-slate-300 hover:bg-slate-800/50 p-1.5 rounded-lg cursor-pointer transition">
                             <input type="checkbox" name="roles[]" value="{{ $role->id }}" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
                             <div>
                                 <span class="font-semibold text-white block">{{ $role->name }}</span>
@@ -204,11 +199,11 @@
 
             <!-- Assigned Warehouse Location -->
             <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Facility / Warehouse Location</label>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Assigned Warehouse</label>
                 <select name="warehouse_id" id="edit_warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-medium">
-                    <option value="">-- All Facilities / Global Headquarters --</option>
+                    <option value="">-- All Warehouses (Global HQ) --</option>
                     @foreach($warehouses as $wh)
-                        <option value="{{ $wh->id }}">[{{ $wh->type_label }}] {{ $wh->name }} ({{ $wh->code }})</option>
+                        <option value="{{ $wh->id }}">{{ $wh->name }} ({{ $wh->code }})</option>
                     @endforeach
                 </select>
                 <p class="text-[10px] text-slate-400 mt-1">Assign to a specific warehouse to scope stock balance and requests to this depot.</p>
@@ -222,16 +217,11 @@
                 </select>
             </div>
 
-            <div class="flex items-center space-x-2">
-                <input type="checkbox" name="is_org_admin" id="edit_is_org_admin" value="1" class="rounded bg-slate-950 border-slate-800 text-indigo-600 focus:ring-indigo-500">
-                <label for="edit_is_org_admin" class="text-xs text-slate-300">Grant Org Admin Privileges</label>
-            </div>
-
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-2">Assigned Organization Roles</label>
-                <div class="space-y-2 max-h-40 overflow-y-auto p-2 bg-slate-950 border border-slate-800 rounded-xl">
+                <div class="space-y-1.5 max-h-40 overflow-y-auto p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl">
                     @foreach($roles as $role)
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 hover:bg-slate-900 p-1 rounded cursor-pointer">
+                        <label class="flex items-center space-x-2.5 text-xs text-slate-300 hover:bg-slate-800/50 p-1.5 rounded-lg cursor-pointer transition">
                             <input type="checkbox" name="roles[]" value="{{ $role->id }}" id="edit_role_{{ $role->id }}" class="edit-role-checkbox rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
                             <span class="font-semibold text-white">{{ $role->name }}</span>
                         </label>
@@ -254,7 +244,6 @@
         document.getElementById('edit_email').value = user.email;
         document.getElementById('edit_status').value = user.status;
         document.getElementById('edit_warehouse_id').value = (user.warehouse_id !== null && user.warehouse_id !== undefined) ? user.warehouse_id.toString() : '';
-        document.getElementById('edit_is_org_admin').checked = user.is_org_admin == 1;
 
         // Uncheck all roles first
         document.querySelectorAll('.edit-role-checkbox').forEach(cb => cb.checked = false);

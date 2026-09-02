@@ -21,12 +21,12 @@ class OrgAdminController extends Controller
     {
         $users = User::where('organization_id', Auth::user()->organization_id)
             ->where('is_super_admin', false)
-            ->with(['roles', 'warehouse'])
+            ->with(['roles', 'warehouse.warehouseType'])
             ->latest()
             ->get();
 
         $roles = Role::where('organization_id', Auth::user()->organization_id)->get();
-        $warehouses = Warehouse::where('organization_id', Auth::user()->organization_id)->orderBy('name')->get();
+        $warehouses = Warehouse::where('organization_id', Auth::user()->organization_id)->with('warehouseType')->orderBy('name')->get();
 
         return view('orgadmin.users', compact('users', 'roles', 'warehouses'));
     }
@@ -78,7 +78,9 @@ class OrgAdminController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->status = $request->status;
-        $user->is_org_admin = $request->boolean('is_org_admin');
+        if ($request->has('is_org_admin')) {
+            $user->is_org_admin = $request->boolean('is_org_admin');
+        }
         $user->warehouse_id = $request->filled('warehouse_id') ? (int) $request->warehouse_id : null;
 
         if ($request->filled('password')) {
