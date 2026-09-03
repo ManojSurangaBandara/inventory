@@ -51,12 +51,12 @@
         <div class="flex items-center space-x-3 flex-wrap gap-y-2">
             <button onclick="document.getElementById('addStateModal').classList.remove('hidden')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl text-xs border border-slate-700 transition flex items-center space-x-1.5 shadow-sm">
                 <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-                <span>+ Add State Step</span>
+                <span>Add State Step</span>
             </button>
 
             <button onclick="document.getElementById('addTransitionModal').classList.remove('hidden')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center space-x-1.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                <span>+ Add Transition Rule</span>
+                <span>Add Transition Rule</span>
             </button>
 
             <form action="{{ route('workflows.destroy', $workflow->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete workflow \'{{ $workflow->name }}\'?')">
