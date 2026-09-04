@@ -16,7 +16,6 @@ class WarehouseType extends Model
     protected $fillable = [
         'organization_id',
         'name',
-        'code',
         'color', // emerald, blue, amber, purple, rose, cyan, indigo
         'description',
         'is_default',
@@ -49,31 +48,6 @@ class WarehouseType extends Model
     }
 
     /**
-     * Automatically generate unique uppercase code from name.
-     */
-    public static function generateUniqueCode(int $organizationId, string $name, ?int $ignoreId = null): string
-    {
-        $baseCode = strtoupper(preg_replace('/[^A-Za-z0-9]/', '_', trim($name)));
-        $baseCode = trim($baseCode, '_');
-        if (empty($baseCode)) {
-            $baseCode = 'TYPE';
-        }
-        $baseCode = substr($baseCode, 0, 30);
-        $code = $baseCode;
-        $counter = 1;
-
-        while (static::where('organization_id', $organizationId)
-            ->where('code', $code)
-            ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
-            ->exists()) {
-            $counter++;
-            $code = substr($baseCode, 0, 25) . '_' . $counter;
-        }
-
-        return $code;
-    }
-
-    /**
      * Ensure baseline default warehouse types exist for an organization.
      */
     public static function ensureDefaults(int $organizationId): Collection
@@ -87,7 +61,6 @@ class WarehouseType extends Model
             [
                 'organization_id' => $organizationId,
                 'name' => 'Main Warehouse (Central)',
-                'code' => 'MAIN',
                 'color' => 'emerald',
                 'description' => 'Central primary distribution depot and headquarters storage facility',
                 'is_default' => true,
@@ -95,7 +68,6 @@ class WarehouseType extends Model
             [
                 'organization_id' => $organizationId,
                 'name' => 'Sub Warehouse (Regional)',
-                'code' => 'SUB',
                 'color' => 'blue',
                 'description' => 'Regional forward distribution depot and divisional warehouse',
                 'is_default' => false,
@@ -103,7 +75,6 @@ class WarehouseType extends Model
             [
                 'organization_id' => $organizationId,
                 'name' => 'Unit Warehouse (Workshop/Field)',
-                'code' => 'UNIT',
                 'color' => 'amber',
                 'description' => 'Field unit storeroom, workshop depot, or department storage',
                 'is_default' => false,
@@ -116,9 +87,9 @@ class WarehouseType extends Model
 
         // Link any pre-existing warehouses with string type
         $types = static::where('organization_id', $organizationId)->get();
-        $mainType = $types->firstWhere('code', 'MAIN');
-        $subType = $types->firstWhere('code', 'SUB');
-        $unitType = $types->firstWhere('code', 'UNIT');
+        $mainType = $types->firstWhere('name', 'Main Warehouse (Central)') ?? $types->first();
+        $subType = $types->firstWhere('name', 'Sub Warehouse (Regional)') ?? $types->first();
+        $unitType = $types->firstWhere('name', 'Unit Warehouse (Workshop/Field)') ?? $types->first();
 
         Warehouse::where('organization_id', $organizationId)->whereNull('warehouse_type_id')->each(function ($wh) use ($mainType, $subType, $unitType) {
             $matched = match (strtolower($wh->type ?? 'main')) {

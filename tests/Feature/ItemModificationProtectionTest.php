@@ -95,7 +95,6 @@ class ItemModificationProtectionTest extends TestCase
         $wh = Warehouse::create([
             'organization_id' => $org->id,
             'name' => 'Main Warehouse',
-            'code' => 'WH-MAIN',
         ]);
 
         $usedItem = InventoryItem::create([

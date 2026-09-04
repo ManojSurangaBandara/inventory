@@ -10,6 +10,7 @@ use App\Models\WarehouseType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class InventoryController extends Controller
 {
@@ -300,7 +301,6 @@ class InventoryController extends Controller
     {
         $rules = [
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50',
             'warehouse_type_id' => 'nullable|exists:warehouse_types,id',
             'parent_warehouse_id' => 'nullable|exists:warehouses,id',
             'location' => 'nullable|string',
@@ -315,7 +315,7 @@ class InventoryController extends Controller
             $whType = WarehouseType::where('organization_id', $orgId)->findOrFail($request->warehouse_type_id);
         } elseif ($request->filled('type')) {
             $whType = WarehouseType::where('organization_id', $orgId)
-                ->where('code', strtoupper($request->type))
+                ->whereRaw('LOWER(name) = ?', [strtolower($request->type)])
                 ->first();
         }
 
@@ -335,8 +335,7 @@ class InventoryController extends Controller
             'warehouse_type_id' => $whType ? $whType->id : null,
             'parent_warehouse_id' => $parentWarehouseId,
             'name' => $request->name,
-            'code' => strtoupper($request->code),
-            'type' => $whType ? strtolower($whType->code) : ($request->type ?? 'main'),
+            'type' => $whType ? Str::slug($whType->name) : ($request->type ?? 'main'),
             'location' => $request->location,
         ]);
 
@@ -350,7 +349,6 @@ class InventoryController extends Controller
 
         $rules = [
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50',
             'warehouse_type_id' => 'nullable|exists:warehouse_types,id',
             'parent_warehouse_id' => 'nullable|exists:warehouses,id',
             'location' => 'nullable|string',
@@ -363,7 +361,7 @@ class InventoryController extends Controller
             $whType = WarehouseType::where('organization_id', $orgId)->findOrFail($request->warehouse_type_id);
         } elseif ($request->filled('type')) {
             $whType = WarehouseType::where('organization_id', $orgId)
-                ->where('code', strtoupper($request->type))
+                ->whereRaw('LOWER(name) = ?', [strtolower($request->type)])
                 ->first();
         }
 
@@ -392,10 +390,9 @@ class InventoryController extends Controller
 
         $warehouse->update([
             'name' => $request->name,
-            'code' => strtoupper($request->code),
             'warehouse_type_id' => $whType ? $whType->id : $warehouse->warehouse_type_id,
             'parent_warehouse_id' => $parentWarehouseId,
-            'type' => $whType ? strtolower($whType->code) : ($request->type ?? $warehouse->type),
+            'type' => $whType ? Str::slug($whType->name) : ($request->type ?? $warehouse->type),
             'location' => $request->location,
         ]);
 
@@ -475,12 +472,9 @@ class InventoryController extends Controller
             return redirect()->back()->with('error', "A warehouse type named '{$name}' already exists.");
         }
 
-        $code = WarehouseType::generateUniqueCode($orgId, $name);
-
         WarehouseType::create([
             'organization_id' => $orgId,
             'name' => $name,
-            'code' => $code,
             'color' => 'indigo',
             'is_default' => false,
         ]);
@@ -508,11 +502,8 @@ class InventoryController extends Controller
             return redirect()->back()->with('error', "Another warehouse type named '{$name}' already exists.");
         }
 
-        $code = WarehouseType::generateUniqueCode($orgId, $name, $id);
-
         $warehouseType->update([
             'name' => $name,
-            'code' => $code,
         ]);
 
         return redirect()->back()->with('success', "Warehouse type '{$name}' updated successfully.");

@@ -62,7 +62,7 @@
                         @if($wf->warehouse)
                             <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold gap-1">
                                 <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                <span>Facility: <strong>{{ $wf->warehouse->name }}</strong> ({{ $wf->warehouse->code }})</span>
+                                <span>Facility: <strong>{{ $wf->warehouse->name }}</strong></span>
                             </span>
                         @else
                             <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] bg-slate-800/80 text-slate-400 border border-slate-700/60 font-semibold gap-1">
@@ -139,7 +139,7 @@
                 <select name="warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
                     <option value="">-- All Locations (Global Scope) --</option>
                     @foreach($warehouses as $wh)
-                        <option value="{{ $wh->id }}">{{ $wh->name }} ({{ $wh->code }}) @if($wh->location) - {{ $wh->location }} @endif</option>
+                        <option value="{{ $wh->id }}">{{ $wh->name }} @if($wh->location) - {{ $wh->location }} @endif</option>
                     @endforeach
                 </select>
                 <p class="text-[10px] text-slate-400 mt-1">Restrict this workflow to a specific depot/location or apply across all warehouses.</p>

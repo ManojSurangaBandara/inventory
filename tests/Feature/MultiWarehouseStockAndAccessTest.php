@@ -35,7 +35,6 @@ class MultiWarehouseStockAndAccessTest extends TestCase
         $mainWH = Warehouse::create([
             'organization_id' => $org->id,
             'name' => 'Central Depot',
-            'code' => 'WH-MAIN',
             'type' => 'main',
             'location' => 'Colombo Harbor',
         ]);
@@ -43,7 +42,6 @@ class MultiWarehouseStockAndAccessTest extends TestCase
         $subWH = Warehouse::create([
             'organization_id' => $org->id,
             'name' => 'Regional Sub-Depot',
-            'code' => 'WH-SUB',
             'type' => 'sub',
             'location' => 'Kandy Sector',
         ]);
@@ -51,7 +49,6 @@ class MultiWarehouseStockAndAccessTest extends TestCase
         $unitWH = Warehouse::create([
             'organization_id' => $org->id,
             'name' => 'Workshop Unit #1',
-            'code' => 'WH-UNIT1',
             'type' => 'unit',
             'location' => 'Field Garage',
         ]);
@@ -181,7 +178,6 @@ class MultiWarehouseStockAndAccessTest extends TestCase
         $this->actingAs($admin);
         $updateWHRes = $this->put(route('inventory.warehouses.update', $unitWH->id), [
             'name' => 'Workshop Unit #1 (Heavy Repair)',
-            'code' => 'WH-UNIT1-HR',
             'type' => 'unit',
             'location' => 'Field Garage Sector 4',
         ]);

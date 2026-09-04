@@ -26,37 +26,35 @@ class WarehouseHierarchyTest extends TestCase
         $admin = User::where('email', 'admin@apexlogistics.com')->first();
         $this->actingAs($admin);
 
-        $mainType = WarehouseType::where('organization_id', $admin->organization_id)->where('code', 'MAIN')->first()
-            ?? WarehouseType::create(['organization_id' => $admin->organization_id, 'name' => 'Main Warehouse', 'code' => 'MAIN']);
+        $mainType = WarehouseType::where('organization_id', $admin->organization_id)->where('name', 'Main Warehouse')->first()
+            ?? WarehouseType::create(['organization_id' => $admin->organization_id, 'name' => 'Main Warehouse']);
 
-        $subType = WarehouseType::where('organization_id', $admin->organization_id)->where('code', 'SUB')->first()
-            ?? WarehouseType::create(['organization_id' => $admin->organization_id, 'name' => 'Sub Warehouse', 'code' => 'SUB']);
+        $subType = WarehouseType::where('organization_id', $admin->organization_id)->where('name', 'Sub Warehouse')->first()
+            ?? WarehouseType::create(['organization_id' => $admin->organization_id, 'name' => 'Sub Warehouse']);
 
         // 1. Create Central Depot (Top-Level)
         $parentRes = $this->post(route('inventory.warehouses.store'), [
             'name' => 'Apex Central Hub',
-            'code' => 'WH-APEX-CENTRAL',
             'warehouse_type_id' => $mainType->id,
             'location' => 'Capital City Logistics Park',
             'parent_warehouse_id' => null,
         ]);
         $parentRes->assertRedirect(route('inventory.warehouses'));
 
-        $centralWh = Warehouse::where('code', 'WH-APEX-CENTRAL')->first();
+        $centralWh = Warehouse::where('name', 'Apex Central Hub')->first();
         $this->assertNotNull($centralWh);
         $this->assertNull($centralWh->parent_warehouse_id);
 
         // 2. Create Sub-Depot reporting to Central Depot
         $childRes = $this->post(route('inventory.warehouses.store'), [
             'name' => 'Apex Regional Sub-Hub',
-            'code' => 'WH-APEX-SUB1',
             'warehouse_type_id' => $subType->id,
             'location' => 'Northern District',
             'parent_warehouse_id' => $centralWh->id,
         ]);
         $childRes->assertRedirect(route('inventory.warehouses'));
 
-        $subWh = Warehouse::where('code', 'WH-APEX-SUB1')->first();
+        $subWh = Warehouse::where('name', 'Apex Regional Sub-Hub')->first();
         $this->assertNotNull($subWh);
         $this->assertEquals($centralWh->id, $subWh->parent_warehouse_id);
         $this->assertEquals($centralWh->id, $subWh->parent->id);
@@ -72,14 +70,12 @@ class WarehouseHierarchyTest extends TestCase
         $parent = Warehouse::create([
             'organization_id' => $admin->organization_id,
             'name' => 'Metropolitan Supply Depot',
-            'code' => 'WH-METRO',
             'location' => 'Metro Center',
         ]);
 
         $child = Warehouse::create([
             'organization_id' => $admin->organization_id,
             'name' => 'North Station Depot',
-            'code' => 'WH-NORTH',
             'location' => 'North Gate',
             'parent_warehouse_id' => $parent->id,
         ]);
@@ -96,6 +92,7 @@ class WarehouseHierarchyTest extends TestCase
         $res->assertSee('Tier 1: Primary Central Hub');
         $res->assertSee('Tier 2: Regional Sub-Depot');
         $res->assertSee('Add Sub-Facility');
+        $res->assertDontSee('Warehouse Code *');
     }
 
     #[Test]
@@ -107,14 +104,12 @@ class WarehouseHierarchyTest extends TestCase
         $wh = Warehouse::create([
             'organization_id' => $admin->organization_id,
             'name' => 'Solo Depot',
-            'code' => 'WH-SOLO',
             'location' => 'Harbor Road',
         ]);
 
         // Attempt to update self as own parent
         $res = $this->put(route('inventory.warehouses.update', $wh->id), [
             'name' => 'Solo Depot Updated',
-            'code' => 'WH-SOLO',
             'parent_warehouse_id' => $wh->id,
         ]);
 
@@ -132,20 +127,17 @@ class WarehouseHierarchyTest extends TestCase
         $hub = Warehouse::create([
             'organization_id' => $admin->organization_id,
             'name' => 'Tier 1 Hub',
-            'code' => 'WH-T1',
         ]);
 
         $sub = Warehouse::create([
             'organization_id' => $admin->organization_id,
             'name' => 'Tier 2 Sub',
-            'code' => 'WH-T2',
             'parent_warehouse_id' => $hub->id,
         ]);
 
         $unit = Warehouse::create([
             'organization_id' => $admin->organization_id,
             'name' => 'Tier 3 Unit',
-            'code' => 'WH-T3',
             'parent_warehouse_id' => $sub->id,
         ]);
 
@@ -154,7 +146,6 @@ class WarehouseHierarchyTest extends TestCase
         // Attempt to set Tier 3 as parent of Tier 1 Hub (would form a cycle!)
         $res = $this->put(route('inventory.warehouses.update', $hub->id), [
             'name' => 'Tier 1 Hub',
-            'code' => 'WH-T1',
             'parent_warehouse_id' => $unit->id,
         ]);
 
@@ -171,13 +162,11 @@ class WarehouseHierarchyTest extends TestCase
         $parentWh = Warehouse::create([
             'organization_id' => $admin->organization_id,
             'name' => 'Parent Hub Unused',
-            'code' => 'WH-PARENT-TEST',
         ]);
 
         $childWh = Warehouse::create([
             'organization_id' => $admin->organization_id,
             'name' => 'Child Depot Unused',
-            'code' => 'WH-CHILD-TEST',
             'parent_warehouse_id' => $parentWh->id,
         ]);
 
@@ -213,14 +202,12 @@ class WarehouseHierarchyTest extends TestCase
         $foreignWh = Warehouse::create([
             'organization_id' => $otherOrg->id,
             'name' => 'Foreign Depot',
-            'code' => 'WH-FOREIGN',
         ]);
 
         $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
 
         $this->withoutExceptionHandling()->post(route('inventory.warehouses.store'), [
             'name' => 'Illegal Sub Depot',
-            'code' => 'WH-ILLEGAL',
             'parent_warehouse_id' => $foreignWh->id,
         ]);
     }

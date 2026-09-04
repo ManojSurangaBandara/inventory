@@ -32,13 +32,12 @@ class WarehouseManagementTest extends TestCase
         // Create a new warehouse
         $storeRes = $this->post(route('inventory.warehouses.store'), [
             'name' => 'Mistaken Depot East',
-            'code' => 'WH-MISTAKE-EAST',
             'warehouse_type_id' => $whType->id,
             'location' => 'Block 9, East Yard',
         ]);
         $storeRes->assertRedirect(route('inventory.warehouses'));
 
-        $warehouse = Warehouse::where('code', 'WH-MISTAKE-EAST')->first();
+        $warehouse = Warehouse::where('name', 'Mistaken Depot East')->first();
         $this->assertNotNull($warehouse);
 
         // Delete the unused warehouse -> succeeds
@@ -84,11 +83,10 @@ class WarehouseManagementTest extends TestCase
         $unused = Warehouse::create([
             'organization_id' => $admin->organization_id,
             'name' => 'Zero Dependency Facility',
-            'code' => 'WH-ZERO-DEP',
             'location' => 'Sector 4',
         ]);
 
-        $used = Warehouse::where('code', '!=', 'WH-ZERO-DEP')->first();
+        $used = Warehouse::where('name', '!=', 'Zero Dependency Facility')->first();
 
         $res = $this->get(route('inventory.warehouses'));
         $res->assertOk();

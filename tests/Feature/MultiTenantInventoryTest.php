@@ -109,7 +109,7 @@ class MultiTenantInventoryTest extends TestCase
 
         $item = InventoryItem::where('sku', 'LAP-XPS15')->first();
         $initialStock = $item->current_stock;
-        $wh = Warehouse::where('code', 'WH-MAIN')->first();
+        $wh = Warehouse::where('name', 'Main Distribution Hub')->first();
 
         // Create Stock Movement (inbound 10 pcs)
         $movement = StockMovement::create([
@@ -154,7 +154,7 @@ class MultiTenantInventoryTest extends TestCase
 
         $item = InventoryItem::where('sku', 'LAP-XPS15')->first();
         $initialStock = $item->current_stock;
-        $wh = Warehouse::where('code', 'WH-MAIN')->first();
+        $wh = Warehouse::where('name', 'Main Distribution Hub')->first();
 
         // Create Stock Movement (inbound 10 pcs)
         $movement = StockMovement::create([

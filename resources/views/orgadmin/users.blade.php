@@ -139,7 +139,7 @@
                 <select name="warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-medium">
                     <option value="">-- All Warehouses (Global HQ) --</option>
                     @foreach($warehouses as $wh)
-                        <option value="{{ $wh->id }}">{{ $wh->name }} ({{ $wh->code }})</option>
+                        <option value="{{ $wh->id }}">{{ $wh->name }}</option>
                     @endforeach
                 </select>
                 <p class="text-[10px] text-slate-400 mt-1">Assign to a specific warehouse to scope stock balance and requests to this depot.</p>
@@ -203,7 +203,7 @@
                 <select name="warehouse_id" id="edit_warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-medium">
                     <option value="">-- All Warehouses (Global HQ) --</option>
                     @foreach($warehouses as $wh)
-                        <option value="{{ $wh->id }}">{{ $wh->name }} ({{ $wh->code }})</option>
+                        <option value="{{ $wh->id }}">{{ $wh->name }}</option>
                     @endforeach
                 </select>
                 <p class="text-[10px] text-slate-400 mt-1">Assign to a specific warehouse to scope stock balance and requests to this depot.</p>

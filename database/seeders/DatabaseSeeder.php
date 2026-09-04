@@ -159,8 +159,8 @@ class DatabaseSeeder extends Seeder
         $catElectronics = Category::create(['organization_id' => $apexOrg->id, 'name' => 'Electronics & Computing', 'description' => 'Laptops, monitors, components']);
         $catParts = Category::create(['organization_id' => $apexOrg->id, 'name' => 'Industrial Parts', 'description' => 'Cables, sensors, robotics parts']);
 
-        $whMain = Warehouse::create(['organization_id' => $apexOrg->id, 'name' => 'Main Distribution Hub', 'code' => 'WH-MAIN', 'location' => 'Zone A Depot']);
-        $whSecondary = Warehouse::create(['organization_id' => $apexOrg->id, 'name' => 'West Coast Distribution Center', 'code' => 'WH-WEST', 'location' => 'Zone B Depot']);
+        $whMain = Warehouse::create(['organization_id' => $apexOrg->id, 'name' => 'Main Distribution Hub', 'location' => 'Zone A Depot']);
+        $whSecondary = Warehouse::create(['organization_id' => $apexOrg->id, 'name' => 'West Coast Distribution Center', 'location' => 'Zone B Depot']);
 
         $supplier = Supplier::create([
             'organization_id' => $apexOrg->id,

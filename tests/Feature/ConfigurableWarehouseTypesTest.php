@@ -31,13 +31,14 @@ class ConfigurableWarehouseTypesTest extends TestCase
         $res = $this->get(route('inventory.warehouse-types'));
         $res->assertStatus(200);
         $res->assertSee('Warehouse Types');
+        $res->assertDontSee('Type Code');
 
         // Check defaults were seeded
         $types = WarehouseType::where('organization_id', $org->id)->get();
         $this->assertCount(3, $types);
-        $this->assertTrue($types->contains('code', 'MAIN'));
-        $this->assertTrue($types->contains('code', 'SUB'));
-        $this->assertTrue($types->contains('code', 'UNIT'));
+        $this->assertTrue($types->contains('name', 'Main Warehouse (Central)'));
+        $this->assertTrue($types->contains('name', 'Sub Warehouse (Regional)'));
+        $this->assertTrue($types->contains('name', 'Unit Warehouse (Workshop/Field)'));
 
         // 2. Create custom warehouse type taking ONLY name
         $createTypeRes = $this->post(route('inventory.warehouse-types.store'), [
@@ -47,18 +48,16 @@ class ConfigurableWarehouseTypesTest extends TestCase
 
         $coldType = WarehouseType::where('organization_id', $org->id)->where('name', 'Cold Storage Facility')->first();
         $this->assertNotNull($coldType);
-        $this->assertEquals('COLD_STORAGE_FACILITY', $coldType->code);
 
         // 3. Create a warehouse assigned to the custom warehouse type (warehouse_type_id required)
         $createWHRes = $this->post(route('inventory.warehouses.store'), [
             'name' => 'Colombo Cold Hub #1',
-            'code' => 'WH-COLD-01',
             'warehouse_type_id' => $coldType->id,
             'location' => 'Port Zone 3, Colombo',
         ]);
         $createWHRes->assertRedirect(route('inventory.warehouses'));
 
-        $warehouse = Warehouse::where('organization_id', $org->id)->where('code', 'WH-COLD-01')->first();
+        $warehouse = Warehouse::where('organization_id', $org->id)->where('name', 'Colombo Cold Hub #1')->first();
         $this->assertNotNull($warehouse);
         $this->assertEquals($coldType->id, $warehouse->warehouse_type_id);
         $this->assertEquals('Cold Storage Facility', $warehouse->type_label);
@@ -71,7 +70,6 @@ class ConfigurableWarehouseTypesTest extends TestCase
 
         $coldType->refresh();
         $this->assertEquals('Ultra-Low Temperature Depot', $coldType->name);
-        $this->assertEquals('ULTRA_LOW_TEMPERATURE_DEPOT', $coldType->code);
 
         $warehouse->refresh();
         $this->assertEquals('Ultra-Low Temperature Depot', $warehouse->type_label);
@@ -85,7 +83,6 @@ class ConfigurableWarehouseTypesTest extends TestCase
         $unusedType = WarehouseType::create([
             'organization_id' => $org->id,
             'name' => 'Temporary Transit Staging',
-            'code' => 'TRANSIT',
         ]);
         $deleteRes = $this->delete(route('inventory.warehouse-types.destroy', $unusedType->id));
         $deleteRes->assertSessionHas('success');

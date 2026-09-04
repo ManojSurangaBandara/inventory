@@ -52,9 +52,6 @@
 
                     <div class="flex items-center space-x-2 flex-wrap gap-y-1">
                         <h4 class="font-bold text-white text-base">{{ $wh->name }}</h4>
-                        <span class="font-mono text-xs text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 font-semibold">
-                            {{ $wh->code }}
-                        </span>
                     </div>
 
                     <div class="text-xs text-slate-400 flex items-center space-x-1">
@@ -90,7 +87,7 @@
                 <!-- Action Buttons -->
                 <div class="flex items-center space-x-1.5">
                     <!-- Add Child Warehouse Button -->
-                    <button type="button" onclick="openAddSubFacilityModal({{ $wh->id }}, '{{ addslashes($wh->name) }}', '{{ addslashes($wh->code) }}')" class="px-2.5 py-1.5 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 rounded-xl text-xs font-semibold transition flex items-center space-x-1 shadow-sm" title="Add child facility directly under {{ $wh->name }}">
+                    <button type="button" onclick="openAddSubFacilityModal({{ $wh->id }}, '{{ addslashes($wh->name) }}')" class="px-2.5 py-1.5 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 rounded-xl text-xs font-semibold transition flex items-center space-x-1 shadow-sm" title="Add child facility directly under {{ $wh->name }}">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         <span>Add Sub-Facility</span>
                     </button>

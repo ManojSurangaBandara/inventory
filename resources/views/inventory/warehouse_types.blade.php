@@ -57,7 +57,6 @@
                 <thead class="bg-slate-950 uppercase font-semibold text-slate-400 border-b border-slate-800">
                     <tr>
                         <th class="px-4 py-3.5">Warehouse Type Name</th>
-                        <th class="px-4 py-3.5">Type Code</th>
                         <th class="px-4 py-3.5">Linked Facilities</th>
                         <th class="px-4 py-3.5 text-right">Actions</th>
                     </tr>
@@ -76,13 +75,6 @@
                                         <span class="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 font-semibold">Default</span>
                                     @endif
                                 </div>
-                            </td>
-
-                            <!-- Code -->
-                            <td class="px-4 py-4 font-mono">
-                                <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                                    {{ $wt->code }}
-                                </span>
                             </td>
 
                             <!-- Linked Facilities -->
@@ -123,7 +115,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-4 py-8 text-center text-slate-500">No warehouse types found. Click "+ New Warehouse Type" to create one.</td>
+                            <td colspan="3" class="px-4 py-8 text-center text-slate-500">No warehouse types found. Click "+ New Warehouse Type" to create one.</td>
                         </tr>
                     @endforelse
                 </tbody>

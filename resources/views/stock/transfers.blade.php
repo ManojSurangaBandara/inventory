@@ -119,7 +119,7 @@
                     <select name="warehouse_id" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
                         <option value="">-- Select Source Depot --</option>
                         @foreach($warehouses as $w)
-                            <option value="{{ $w->id }}">{{ $w->name }} ({{ $w->code }})</option>
+                            <option value="{{ $w->id }}">{{ $w->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -128,7 +128,7 @@
                     <select name="target_warehouse_id" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
                         <option value="">-- Select Target Depot --</option>
                         @foreach($warehouses as $w)
-                            <option value="{{ $w->id }}">{{ $w->name }} ({{ $w->code }})</option>
+                            <option value="{{ $w->id }}">{{ $w->name }}</option>
                         @endforeach
                     </select>
                 </div>

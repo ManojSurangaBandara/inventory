@@ -17,7 +17,6 @@ class Warehouse extends Model
         'warehouse_type_id',
         'parent_warehouse_id',
         'name',
-        'code',
         'type', // legacy string fallback: main, sub, unit
         'location',
     ];

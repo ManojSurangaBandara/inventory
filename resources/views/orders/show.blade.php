@@ -26,7 +26,9 @@
         <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-2">
             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Destination Warehouse</span>
             <div class="font-bold text-white text-base">{{ $order->warehouse->name ?? 'N/A' }}</div>
-            <div class="text-xs text-indigo-400 font-mono">{{ $order->warehouse->code ?? '' }}</div>
+            @if(!empty($order->warehouse->location))
+                <div class="text-xs text-slate-400">{{ $order->warehouse->location }}</div>
+            @endif
         </div>
 
         <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-2">

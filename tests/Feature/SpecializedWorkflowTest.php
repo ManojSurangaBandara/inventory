@@ -38,8 +38,8 @@ class SpecializedWorkflowTest extends TestCase
         $this->admin = User::where('email', 'admin@apexlogistics.com')->first();
         $this->clerk = User::where('email', 'clerk@apexlogistics.com')->first();
         $this->storeman = User::where('email', 'storemen@apexlogistics.com')->first();
-        $this->warehouse1 = Warehouse::where('code', 'WH-MAIN')->first();
-        $this->warehouse2 = Warehouse::where('code', 'WH-WEST')->first();
+        $this->warehouse1 = Warehouse::where('name', 'Main Distribution Hub')->first();
+        $this->warehouse2 = Warehouse::where('name', 'West Coast Distribution Center')->first();
         $this->item = InventoryItem::where('sku', 'LAP-XPS15')->first();
     }
 

@@ -12,7 +12,7 @@
                 @if($activeWarehouse)
                     <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider {{ $activeWarehouse->type_badge_class }} flex items-center gap-1">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        <span>Facility: {{ $activeWarehouse->name }} ({{ $activeWarehouse->code }})</span>
+                        <span>Facility: {{ $activeWarehouse->name }}</span>
                     </span>
                 @else
                     <span class="px-2.5 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 border border-slate-700 font-semibold flex items-center gap-1">
@@ -183,8 +183,8 @@
                                     <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
                                         @foreach($item->warehouseStocks as $ws)
                                             @if($ws->current_stock > 0 && $ws->warehouse)
-                                                <span class="px-1.5 py-0.5 rounded text-[9px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">
-                                                    {{ $ws->warehouse->code }}: <strong>{{ number_format($ws->current_stock) }}</strong>
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] bg-slate-800 text-slate-300 border border-slate-700">
+                                                    {{ $ws->warehouse->name }}: <strong>{{ number_format($ws->current_stock) }}</strong>
                                                 </span>
                                             @endif
                                         @endforeach

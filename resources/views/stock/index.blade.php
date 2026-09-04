@@ -158,7 +158,7 @@
                     <select name="warehouse_id" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-medium">
                         @foreach($warehouses as $wh)
                             <option value="{{ $wh->id }}" {{ (Auth::user()->warehouse_id == $wh->id) ? 'selected' : '' }}>
-                                [{{ $wh->type_label }}] {{ $wh->name }} ({{ $wh->code }})
+                                [{{ $wh->type_label }}] {{ $wh->name }}
                             </option>
                         @endforeach
                     </select>

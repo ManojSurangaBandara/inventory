@@ -50,9 +50,6 @@
                                 </span>
                             </div>
                             <h3 class="font-bold text-white text-base mt-1.5">{{ $wh->name }}</h3>
-                            <span class="font-mono text-[10px] text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 font-semibold inline-block mt-0.5">
-                                {{ $wh->code }}
-                            </span>
                         </div>
                         
                         <div class="flex items-center space-x-1">
@@ -94,7 +91,6 @@
                             </svg>
                             <span class="text-[11px] truncate">
                                 Reports to: <strong class="text-indigo-200">{{ $wh->parent->name }}</strong>
-                                <span class="font-mono text-[10px] text-indigo-400">({{ $wh->parent->code }})</span>
                             </span>
                         </div>
                     @endif
@@ -218,20 +214,13 @@
                 <input type="text" name="name" required placeholder="e.g. Central Supply Depot" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Warehouse Code *</label>
-                    <input type="text" name="code" required placeholder="e.g. WH-CMB-01" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Warehouse Type *</label>
-                    <select name="warehouse_type_id" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-semibold">
-                        @foreach($warehouseTypes as $wt)
-                            <option value="{{ $wt->id }}">[{{ $wt->code }}] {{ $wt->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Warehouse Type *</label>
+                <select name="warehouse_type_id" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-semibold">
+                    @foreach($warehouseTypes as $wt)
+                        <option value="{{ $wt->id }}">{{ $wt->name }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <div>
@@ -239,7 +228,7 @@
                 <select name="parent_warehouse_id" id="add_wh_parent_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-semibold">
                     <option value="">-- None (Top-Level Primary Facility) --</option>
                     @foreach($warehouses as $pWh)
-                        <option value="{{ $pWh->id }}">{{ $pWh->name }} ({{ $pWh->code }}) &bull; {{ $pWh->type_label }}</option>
+                        <option value="{{ $pWh->id }}">{{ $pWh->name }} &bull; {{ $pWh->type_label }}</option>
                     @endforeach
                 </select>
                 <p class="text-[10px] text-slate-400 mt-1">Designate a primary supply depot or central warehouse this facility reports to.</p>
@@ -274,20 +263,13 @@
                 <input type="text" name="name" id="edit_wh_name" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Warehouse Code *</label>
-                    <input type="text" name="code" id="edit_wh_code" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Warehouse Type *</label>
-                    <select name="warehouse_type_id" id="edit_wh_type_id" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-semibold">
-                        @foreach($warehouseTypes as $wt)
-                            <option value="{{ $wt->id }}">[{{ $wt->code }}] {{ $wt->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Warehouse Type *</label>
+                <select name="warehouse_type_id" id="edit_wh_type_id" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-semibold">
+                    @foreach($warehouseTypes as $wt)
+                        <option value="{{ $wt->id }}">{{ $wt->name }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <div>
@@ -295,7 +277,7 @@
                 <select name="parent_warehouse_id" id="edit_parent_warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-semibold">
                     <option value="">-- None (Top-Level Primary Facility) --</option>
                     @foreach($warehouses as $pWh)
-                        <option value="{{ $pWh->id }}" data-wh-id="{{ $pWh->id }}">{{ $pWh->name }} ({{ $pWh->code }}) &bull; {{ $pWh->type_label }}</option>
+                        <option value="{{ $pWh->id }}" data-wh-id="{{ $pWh->id }}">{{ $pWh->name }} &bull; {{ $pWh->type_label }}</option>
                     @endforeach
                 </select>
                 <p class="text-[10px] text-slate-400 mt-1">Designate a primary supply depot. Circular parent dependencies are disabled.</p>
@@ -369,7 +351,7 @@
         document.getElementById('addWHModal').classList.remove('hidden');
     }
 
-    function openAddSubFacilityModal(parentId, parentName, parentCode) {
+    function openAddSubFacilityModal(parentId, parentName) {
         const parentSelect = document.getElementById('add_wh_parent_id');
         if (parentSelect) {
             parentSelect.value = parentId;
@@ -377,7 +359,7 @@
         const banner = document.getElementById('addWHModalParentBanner');
         const bannerText = document.getElementById('addWHModalParentName');
         if (banner && bannerText) {
-            bannerText.textContent = parentName + ' (' + parentCode + ')';
+            bannerText.textContent = parentName;
             banner.classList.remove('hidden');
         }
         document.getElementById('addWHModal').classList.remove('hidden');
@@ -386,7 +368,6 @@
     function openEditWHModal(wh, descendantIds = []) {
         document.getElementById('editWHForm').action = "{{ url('/inventory/warehouses') }}/" + wh.id;
         document.getElementById('edit_wh_name').value = wh.name;
-        document.getElementById('edit_wh_code').value = wh.code;
         document.getElementById('edit_wh_type_id').value = wh.warehouse_type_id || '';
         document.getElementById('edit_wh_location').value = wh.location || '';
 

@@ -38,7 +38,6 @@ class DashboardRedesignTest extends TestCase
         $wh = Warehouse::create([
             'organization_id' => $org->id,
             'name' => 'Main Depot',
-            'code' => 'WH-MAIN',
         ]);
 
         $item1 = InventoryItem::create([

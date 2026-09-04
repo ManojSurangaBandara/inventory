@@ -30,7 +30,6 @@ class WorkflowLocationTest extends TestCase
         $wh = Warehouse::create([
             'organization_id' => $org->id,
             'name' => 'Main Depot Colombo',
-            'code' => 'DEPOT-CMB',
             'location' => 'Zone 4 Logistics Center',
         ]);
 
