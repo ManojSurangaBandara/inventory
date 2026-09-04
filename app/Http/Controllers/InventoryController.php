@@ -275,10 +275,11 @@ class InventoryController extends Controller
         $warehouseTypes = WarehouseType::ensureDefaults($orgId);
 
         $warehousesQuery = Warehouse::where('organization_id', $orgId)
-            ->with(['warehouseType'])
+            ->with(['warehouseType', 'parent', 'children'])
             ->withCount([
                 'stockMovements',
                 'purchaseOrders',
+                'children',
             ]);
 
         if (Schema::hasTable('warehouse_stocks')) {
@@ -295,20 +296,42 @@ class InventoryController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50',
-            'warehouse_type_id' => 'required|exists:warehouse_types,id',
+            'warehouse_type_id' => 'nullable|exists:warehouse_types,id',
+            'parent_warehouse_id' => 'nullable|exists:warehouses,id',
             'location' => 'nullable|string',
         ];
 
         $request->validate($rules);
 
-        $whType = WarehouseType::where('organization_id', Auth::user()->organization_id)->findOrFail($request->warehouse_type_id);
+        $orgId = Auth::user()->organization_id;
+
+        $whType = null;
+        if ($request->filled('warehouse_type_id')) {
+            $whType = WarehouseType::where('organization_id', $orgId)->findOrFail($request->warehouse_type_id);
+        } elseif ($request->filled('type')) {
+            $whType = WarehouseType::where('organization_id', $orgId)
+                ->where('code', strtoupper($request->type))
+                ->first();
+        }
+
+        if (!$whType) {
+            $whType = WarehouseType::where('organization_id', $orgId)->where('is_default', true)->first()
+                ?? WarehouseType::where('organization_id', $orgId)->first();
+        }
+
+        $parentWarehouseId = null;
+        if ($request->filled('parent_warehouse_id')) {
+            $parentWh = Warehouse::where('organization_id', $orgId)->findOrFail($request->parent_warehouse_id);
+            $parentWarehouseId = $parentWh->id;
+        }
 
         Warehouse::create([
-            'organization_id' => Auth::user()->organization_id,
-            'warehouse_type_id' => $whType->id,
+            'organization_id' => $orgId,
+            'warehouse_type_id' => $whType ? $whType->id : null,
+            'parent_warehouse_id' => $parentWarehouseId,
             'name' => $request->name,
             'code' => strtoupper($request->code),
-            'type' => strtolower($whType->code),
+            'type' => $whType ? strtolower($whType->code) : ($request->type ?? 'main'),
             'location' => $request->location,
         ]);
 
@@ -317,24 +340,57 @@ class InventoryController extends Controller
 
     public function updateWarehouse(Request $request, int $id)
     {
-        $warehouse = Warehouse::where('organization_id', Auth::user()->organization_id)->findOrFail($id);
+        $orgId = Auth::user()->organization_id;
+        $warehouse = Warehouse::where('organization_id', $orgId)->findOrFail($id);
 
         $rules = [
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50',
-            'warehouse_type_id' => 'required|exists:warehouse_types,id',
+            'warehouse_type_id' => 'nullable|exists:warehouse_types,id',
+            'parent_warehouse_id' => 'nullable|exists:warehouses,id',
             'location' => 'nullable|string',
         ];
 
         $request->validate($rules);
 
-        $whType = WarehouseType::where('organization_id', Auth::user()->organization_id)->findOrFail($request->warehouse_type_id);
+        $whType = null;
+        if ($request->filled('warehouse_type_id')) {
+            $whType = WarehouseType::where('organization_id', $orgId)->findOrFail($request->warehouse_type_id);
+        } elseif ($request->filled('type')) {
+            $whType = WarehouseType::where('organization_id', $orgId)
+                ->where('code', strtoupper($request->type))
+                ->first();
+        }
+
+        if (!$whType && $warehouse->warehouse_type_id) {
+            $whType = $warehouse->warehouseType;
+        }
+
+        $parentWarehouseId = null;
+        if ($request->filled('parent_warehouse_id')) {
+            $targetParentId = (int)$request->parent_warehouse_id;
+
+            // Cycle prevention: Cannot set self as parent
+            if ($targetParentId === $warehouse->id) {
+                return back()->with('error', "Cannot set a warehouse as its own parent facility.")->withInput();
+            }
+
+            // Cycle prevention: Cannot set any descendant as parent
+            $descendantIds = $warehouse->allDescendantIds();
+            if (in_array($targetParentId, $descendantIds)) {
+                return back()->with('error', "Circular hierarchy detected: cannot set a sub-facility / descendant as the parent warehouse.")->withInput();
+            }
+
+            $parentWh = Warehouse::where('organization_id', $orgId)->findOrFail($targetParentId);
+            $parentWarehouseId = $parentWh->id;
+        }
 
         $warehouse->update([
             'name' => $request->name,
             'code' => strtoupper($request->code),
-            'warehouse_type_id' => $whType->id,
-            'type' => strtolower($whType->code),
+            'warehouse_type_id' => $whType ? $whType->id : $warehouse->warehouse_type_id,
+            'parent_warehouse_id' => $parentWarehouseId,
+            'type' => $whType ? strtolower($whType->code) : ($request->type ?? $warehouse->type),
             'location' => $request->location,
         ]);
 
@@ -344,6 +400,11 @@ class InventoryController extends Controller
     public function destroyWarehouse(int $id)
     {
         $warehouse = Warehouse::where('organization_id', Auth::user()->organization_id)->findOrFail($id);
+
+        $childrenCount = $warehouse->children()->count();
+        if ($childrenCount > 0) {
+            return redirect()->route('inventory.warehouses')->with('error', "Cannot delete warehouse '{$warehouse->name}': it has {$childrenCount} child facility/depot(s) reporting to it. Please reassign or delete the sub-facilities first.");
+        }
 
         $originMovementsCount = $warehouse->stockMovements()->count();
         $targetMovementsCount = \App\Models\StockMovement::where('target_warehouse_id', $warehouse->id)->count();

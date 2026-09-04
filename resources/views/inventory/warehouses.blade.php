@@ -26,7 +26,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
         @forelse($warehouses as $wh)
             @php
-                $hasDependencies = ($wh->stock_movements_count > 0) || ($wh->purchase_orders_count > 0);
+                $hasDependencies = ($wh->stock_movements_count > 0) || ($wh->purchase_orders_count > 0) || (($wh->children_count ?? 0) > 0);
             @endphp
             <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl flex flex-col justify-between space-y-4 hover:border-indigo-500/30 transition">
                 <div class="space-y-3">
@@ -45,7 +45,7 @@
                         
                         <div class="flex items-center space-x-1">
                             <!-- Edit Warehouse Button -->
-                            <button type="button" onclick='openEditWHModal({{ json_encode($wh) }})' class="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition" title="Edit Warehouse">
+                            <button type="button" onclick='openEditWHModal({{ json_encode($wh) }}, {{ json_encode($wh->allDescendantIds()) }})' class="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition" title="Edit Warehouse">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
@@ -73,6 +73,30 @@
                         </svg>
                         <span class="truncate">{{ $wh->location ?? 'Main Facility Depot' }}</span>
                     </div>
+
+                    <!-- Hierarchy Badges -->
+                    @if($wh->parent)
+                        <div class="text-xs text-indigo-300 bg-indigo-950/40 border border-indigo-800/40 px-2.5 py-1.5 rounded-xl flex items-center space-x-2">
+                            <svg class="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+                            </svg>
+                            <span class="text-[11px] truncate">
+                                Reports to: <strong class="text-indigo-200">{{ $wh->parent->name }}</strong>
+                                <span class="font-mono text-[10px] text-indigo-400">({{ $wh->parent->code }})</span>
+                            </span>
+                        </div>
+                    @endif
+
+                    @if(($wh->children_count ?? 0) > 0)
+                        <div class="text-xs text-emerald-300 bg-emerald-950/30 border border-emerald-800/40 px-2.5 py-1.5 rounded-xl flex items-center space-x-2">
+                            <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            <span class="text-[11px] truncate">
+                                Parent Hub: <strong class="text-emerald-200">{{ $wh->children_count }}</strong> sub-facility{{ $wh->children_count > 1 ? 'ies' : '' }} attached
+                            </span>
+                        </div>
+                    @endif
 
                     <!-- Usage & Dependency Counters -->
                     <div class="pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs">
@@ -151,6 +175,17 @@
             </div>
 
             <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Parent Facility / Central Hub (Optional)</label>
+                <select name="parent_warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-semibold">
+                    <option value="">-- None (Top-Level Primary Facility) --</option>
+                    @foreach($warehouses as $pWh)
+                        <option value="{{ $pWh->id }}">{{ $pWh->name }} ({{ $pWh->code }}) &bull; {{ $pWh->type_label }}</option>
+                    @endforeach
+                </select>
+                <p class="text-[10px] text-slate-400 mt-1">Designate a primary supply depot or central warehouse this facility reports to.</p>
+            </div>
+
+            <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Physical Location Address</label>
                 <input type="text" name="location" placeholder="e.g. Building 4, Logistics Park, Colombo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
             </div>
@@ -196,6 +231,17 @@
             </div>
 
             <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Parent Facility / Central Hub (Optional)</label>
+                <select name="parent_warehouse_id" id="edit_parent_warehouse_id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-semibold">
+                    <option value="">-- None (Top-Level Primary Facility) --</option>
+                    @foreach($warehouses as $pWh)
+                        <option value="{{ $pWh->id }}" data-wh-id="{{ $pWh->id }}">{{ $pWh->name }} ({{ $pWh->code }}) &bull; {{ $pWh->type_label }}</option>
+                    @endforeach
+                </select>
+                <p class="text-[10px] text-slate-400 mt-1">Designate a primary supply depot. Circular parent dependencies are disabled.</p>
+            </div>
+
+            <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Physical Location Address</label>
                 <input type="text" name="location" id="edit_wh_location" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
             </div>
@@ -209,12 +255,28 @@
 </div>
 
 <script>
-    function openEditWHModal(wh) {
+    function openEditWHModal(wh, descendantIds = []) {
         document.getElementById('editWHForm').action = "{{ url('/inventory/warehouses') }}/" + wh.id;
         document.getElementById('edit_wh_name').value = wh.name;
         document.getElementById('edit_wh_code').value = wh.code;
         document.getElementById('edit_wh_type_id').value = wh.warehouse_type_id || '';
         document.getElementById('edit_wh_location').value = wh.location || '';
+
+        const parentSelect = document.getElementById('edit_parent_warehouse_id');
+        if (parentSelect) {
+            Array.from(parentSelect.options).forEach(opt => {
+                const optVal = parseInt(opt.getAttribute('data-wh-id'));
+                if (optVal && (optVal === wh.id || (Array.isArray(descendantIds) && descendantIds.includes(optVal)))) {
+                    opt.disabled = true;
+                    opt.hidden = true;
+                } else {
+                    opt.disabled = false;
+                    opt.hidden = false;
+                }
+            });
+            parentSelect.value = wh.parent_warehouse_id || '';
+        }
+
         document.getElementById('editWHModal').classList.remove('hidden');
     }
 </script>

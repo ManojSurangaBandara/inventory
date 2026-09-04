@@ -15,11 +15,53 @@ class Warehouse extends Model
     protected $fillable = [
         'organization_id',
         'warehouse_type_id',
+        'parent_warehouse_id',
         'name',
         'code',
         'type', // legacy string fallback: main, sub, unit
         'location',
     ];
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'parent_warehouse_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(Warehouse::class, 'parent_warehouse_id');
+    }
+
+    /**
+     * Recursively retrieve all descendant warehouse IDs to prevent circular parenting.
+     */
+    public function allDescendantIds(): array
+    {
+        $descendants = [];
+        $children = $this->children()->get();
+        foreach ($children as $child) {
+            $descendants[] = $child->id;
+            $descendants = array_merge($descendants, $child->allDescendantIds());
+        }
+        return array_values(array_unique($descendants));
+    }
+
+    public function getHierarchyTrailAttribute(): string
+    {
+        $trail = [$this->name];
+        $current = $this;
+        $seen = [$this->id];
+        while ($current->parent_warehouse_id && !in_array($current->parent_warehouse_id, $seen)) {
+            $seen[] = $current->parent_warehouse_id;
+            $parent = $current->parent ?? Warehouse::find($current->parent_warehouse_id);
+            if (!$parent) {
+                break;
+            }
+            array_unshift($trail, $parent->name);
+            $current = $parent;
+        }
+        return implode(' › ', $trail);
+    }
 
     public function warehouseType(): BelongsTo
     {
