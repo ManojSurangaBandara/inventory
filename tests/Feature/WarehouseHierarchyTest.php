@@ -90,6 +90,12 @@ class WarehouseHierarchyTest extends TestCase
         $res->assertSee('North Station Depot');
         $res->assertSee('Reports to:');
         $res->assertSee('Parent Hub:');
+        // Hierarchy Tree View assertions
+        $res->assertSee('Hierarchy Tree');
+        $res->assertSee('Facility Network Topology');
+        $res->assertSee('Tier 1: Primary Central Hub');
+        $res->assertSee('Tier 2: Regional Sub-Depot');
+        $res->assertSee('Add Sub-Facility');
     }
 
     #[Test]

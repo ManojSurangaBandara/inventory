@@ -288,7 +288,12 @@ class InventoryController extends Controller
 
         $warehouses = $warehousesQuery->get();
 
-        return view('inventory.warehouses', compact('warehouses', 'warehouseTypes'));
+        $warehousesByParent = $warehouses->groupBy('parent_warehouse_id');
+        $rootWarehouses = $warehouses->filter(function ($wh) use ($warehouses) {
+            return is_null($wh->parent_warehouse_id) || !$warehouses->contains('id', $wh->parent_warehouse_id);
+        });
+
+        return view('inventory.warehouses', compact('warehouses', 'warehouseTypes', 'warehousesByParent', 'rootWarehouses'));
     }
 
     public function storeWarehouse(Request $request)
