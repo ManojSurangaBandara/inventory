@@ -90,9 +90,25 @@
                 </thead>
                 <tbody class="divide-y divide-slate-800/60">
                     @forelse($items as $item)
-                        <tr class="hover:bg-slate-800/30 transition">
+                        <tr class="hover:bg-slate-800/40 cursor-pointer transition group"
+                            onclick="viewItem(this)"
+                            title="Click to view item details"
+                            data-item="{{ json_encode([
+                                'id' => $item->id,
+                                'sku' => $item->sku,
+                                'name' => $item->name,
+                                'unit' => $item->unit,
+                                'unit_cost' => (float)$item->unit_cost,
+                                'reorder_level' => (float)$item->reorder_level,
+                                'current_stock' => (float)$item->current_stock,
+                                'description' => $item->description,
+                                'category1' => $item->category1->name ?? null,
+                                'category2' => $item->category2->name ?? null,
+                                'category3' => $item->category3->name ?? null,
+                                'category4' => $item->category4->name ?? null,
+                            ]) }}">
                             <td class="px-4 py-4">
-                                <div class="font-bold text-white text-sm">{{ $item->name }}</div>
+                                <div class="font-bold text-white text-sm group-hover:text-indigo-300 transition">{{ $item->name }}</div>
                                 <div class="font-mono text-indigo-400 text-[11px]">{{ $item->sku }}</div>
                                 @if($item->description)
                                     <div class="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{{ $item->description }}</div>
@@ -118,7 +134,7 @@
                                 <div class="font-bold text-white">Rs. {{ number_format($item->unit_cost, 2) }}</div>
                                 <div class="text-[10px] text-slate-400">per {{ $item->unit }}</div>
                             </td>
-                            <td class="px-4 py-4 text-right space-x-2">
+                            <td class="px-4 py-4 text-right space-x-2" onclick="event.stopPropagation()">
                                 @if(!$item->isUsed())
                                     <button onclick='editItem({{ json_encode($item) }})' class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-medium transition">
                                         Edit
@@ -350,6 +366,57 @@
     </div>
 </div>
 
+<!-- Modal: View Item Details -->
+<div id="viewItemModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4" style="display: none;" onclick="if(event.target === this) closeItemDetails()">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-xl shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+        <!-- Header -->
+        <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+            <div class="space-y-1">
+                <span id="view_sku" class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"></span>
+                <h3 id="view_name" class="font-bold text-white text-lg mt-1"></h3>
+            </div>
+            <button type="button" onclick="closeItemDetails()" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+
+        <!-- Categories Hierarchy -->
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Category Classification</span>
+            <div id="view_categories" class="flex flex-wrap items-center gap-1.5 text-xs text-slate-200"></div>
+        </div>
+
+        <!-- Item Attributes Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                <span class="text-[10px] text-slate-400 font-medium block">Unit of Measure</span>
+                <div id="view_unit" class="text-sm font-bold text-white mt-0.5"></div>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                <span class="text-[10px] text-slate-400 font-medium block">Unit Cost</span>
+                <div id="view_unit_cost" class="text-sm font-bold text-emerald-400 mt-0.5"></div>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                <span class="text-[10px] text-slate-400 font-medium block">Reorder Level</span>
+                <div id="view_reorder_level" class="text-sm font-bold text-amber-400 mt-0.5"></div>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                <span class="text-[10px] text-slate-400 font-medium block">Current Stock</span>
+                <div id="view_current_stock" class="text-sm font-bold text-white mt-0.5"></div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div id="view_description_wrapper" class="space-y-1">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Description & Specifications</span>
+            <p id="view_description" class="text-xs text-slate-300 bg-slate-950 p-3.5 rounded-2xl border border-slate-800 leading-relaxed whitespace-pre-wrap"></p>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-end pt-3 border-t border-slate-800">
+            <button type="button" onclick="closeItemDetails()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs hover:bg-slate-700 font-semibold transition">Close</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const allCat2 = @json($category2List);
     const allCat3 = @json($category3List);
@@ -445,5 +512,74 @@
 
         document.getElementById('editItemModal').classList.remove('hidden');
     }
+
+    function viewItem(tr) {
+        try {
+            const item = JSON.parse(tr.getAttribute('data-item'));
+            document.getElementById('view_sku').textContent = item.sku || '';
+            document.getElementById('view_name').textContent = item.name || '';
+            document.getElementById('view_unit').textContent = item.unit || 'pcs';
+            document.getElementById('view_unit_cost').textContent = 'Rs. ' + parseFloat(item.unit_cost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('view_reorder_level').textContent = (item.reorder_level || 0) + ' ' + (item.unit || 'pcs');
+            document.getElementById('view_current_stock').textContent = (item.current_stock || 0) + ' ' + (item.unit || 'pcs');
+
+            // Category trail
+            const catsContainer = document.getElementById('view_categories');
+            catsContainer.innerHTML = '';
+            const cats = [
+                { level: 'L1', name: item.category1 },
+                { level: 'L2', name: item.category2 },
+                { level: 'L3', name: item.category3 },
+                { level: 'L4', name: item.category4 },
+            ].filter(c => !!c.name);
+
+            if (cats.length === 0) {
+                catsContainer.innerHTML = '<span class="text-slate-500 italic text-xs">Uncategorized</span>';
+            } else {
+                cats.forEach((c, idx) => {
+                    const badge = document.createElement('span');
+                    badge.className = 'px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-200 flex items-center gap-1';
+                    badge.innerHTML = `<span class="text-[9px] font-bold text-indigo-400">${c.level}:</span> ${c.name}`;
+                    catsContainer.appendChild(badge);
+
+                    if (idx < cats.length - 1) {
+                        const arrow = document.createElement('span');
+                        arrow.className = 'text-slate-500 text-xs';
+                        arrow.textContent = '→';
+                        catsContainer.appendChild(arrow);
+                    }
+                });
+            }
+
+            // Description
+            const descWrapper = document.getElementById('view_description_wrapper');
+            if (item.description) {
+                document.getElementById('view_description').textContent = item.description;
+                descWrapper.classList.remove('hidden');
+            } else {
+                descWrapper.classList.add('hidden');
+            }
+
+            const modal = document.getElementById('viewItemModal');
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
+        } catch (e) {
+            console.error('Failed to display item details:', e);
+        }
+    }
+
+    function closeItemDetails() {
+        const modal = document.getElementById('viewItemModal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.add('hidden');
+        }
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeItemDetails();
+        }
+    });
 </script>
 @endsection
